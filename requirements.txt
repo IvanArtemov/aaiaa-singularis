@@ -1,0 +1,13 @@
+# Core dependencies
+requests>=2.31.0
+python-dotenv>=1.0.0
+pyyaml>=6.0.1
+
+# Testing
+pytest>=7.4.0
+pytest-cov>=4.1.0
+
+# Future dependencies for full pipeline
+# PyMuPDF>=1.23.0  # PDF parsing
+# chromadb>=0.4.0  # Vector database
+# streamlit>=1.28.0  # UI

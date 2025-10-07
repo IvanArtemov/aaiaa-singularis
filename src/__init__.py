@@ -1,0 +1,1 @@
+"""Singularis Challenge - AAIAA Project"""
