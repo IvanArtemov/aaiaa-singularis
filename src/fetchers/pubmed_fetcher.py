@@ -3,6 +3,8 @@
 import requests
 import xml.etree.ElementTree as ET
 import time
+import os
+from pathlib import Path
 from typing import List, Dict, Any, Optional
 from .base_fetcher import BaseFetcher, PaperMetadata
 
@@ -10,7 +12,7 @@ from .base_fetcher import BaseFetcher, PaperMetadata
 class PubMedFetcher(BaseFetcher):
     """Fetcher for PubMed using E-utilities API"""
 
-    def __init__(self, config: Dict[str, Any], api_key: str = ""):
+    def __init__(self, config: Dict[str, Any], api_key: str = "", tool_name: str = "", email: str = ""):
         super().__init__(config)
         self.api_key = api_key
         self.database = config.get("database", "pubmed")
@@ -18,6 +20,16 @@ class PubMedFetcher(BaseFetcher):
         self.requests_per_second = config.get("rate_limit", {}).get("requests_per_second", 3)
         self.delay_between_requests = 1.0 / self.requests_per_second
         self.last_request_time = 0
+
+        # REQUIRED: Tool name and email to avoid IP blocking
+        self.tool_name = tool_name or os.getenv("NCBI_TOOL_NAME", "")
+        self.email = email or os.getenv("NCBI_EMAIL", "")
+
+        # Warn if missing required parameters
+        if not self.tool_name or not self.email:
+            print("WARNING: NCBI_TOOL_NAME and NCBI_EMAIL not set!")
+            print("Your IP may be blocked. Set them in .env file.")
+            print("See: https://www.ncbi.nlm.nih.gov/books/NBK25497/")
 
     def _rate_limit(self):
         """Enforce rate limiting"""
@@ -37,6 +49,12 @@ class PubMedFetcher(BaseFetcher):
         if self.api_key:
             params["api_key"] = self.api_key
 
+        # REQUIRED: Add tool and email to avoid IP blocking
+        if self.tool_name:
+            params["tool"] = self.tool_name
+        if self.email:
+            params["email"] = self.email
+
         # Build query string
         query_parts = [f"{key}={value}" for key, value in params.items()]
         return f"{url}?{'&'.join(query_parts)}"
@@ -46,6 +64,7 @@ class PubMedFetcher(BaseFetcher):
         query: str,
         max_results: int = 10,
         sort_by: str = "relevance",
+        free_full_text: bool = False,
         **kwargs
     ) -> List[str]:
         """
@@ -55,6 +74,7 @@ class PubMedFetcher(BaseFetcher):
             query: Search query (e.g., "caloric restriction aging")
             max_results: Maximum number of results
             sort_by: Sort order ("relevance", "pub_date", etc.)
+            free_full_text: If True, filter to only free full text articles
             **kwargs: Additional E-utilities parameters
 
         Returns:
@@ -62,9 +82,14 @@ class PubMedFetcher(BaseFetcher):
         """
         self._rate_limit()
 
+        # Add free full text filter if requested
+        search_term = query
+        if free_full_text:
+            search_term = f"{query} AND free full text[filter]"
+
         url = self._build_url(
             "search",
-            term=query,
+            term=search_term,
             retmax=max_results,
             sort=sort_by,
             retmode="json",
@@ -180,6 +205,9 @@ class PubMedFetcher(BaseFetcher):
                 pmc_id = article_id.text
                 break
 
+        # Determine if free full text is available (indicated by PMC ID)
+        has_free_full_text = pmc_id is not None
+
         return PaperMetadata(
             pmid=pmid,
             pmc_id=pmc_id,
@@ -189,7 +217,8 @@ class PubMedFetcher(BaseFetcher):
             abstract=abstract,
             journal=journal,
             publication_date=pub_date,
-            keywords=keywords
+            keywords=keywords,
+            has_free_full_text=has_free_full_text
         )
 
     def fetch_full_text(self, paper_id: str) -> Optional[str]:
@@ -240,7 +269,11 @@ class PubMedFetcher(BaseFetcher):
                     if linksetdb.get("linkname") == "pubmed_pmc":
                         links = linksetdb.get("links", [])
                         if links:
-                            return links[0]
+                            # Add PMC prefix if not present
+                            pmc_id = str(links[0])
+                            if not pmc_id.startswith("PMC"):
+                                pmc_id = f"PMC{pmc_id}"
+                            return pmc_id
         except Exception as e:
             print(f"Error getting PMC ID: {e}")
 
@@ -264,3 +297,89 @@ class PubMedFetcher(BaseFetcher):
         pmids = self.search(query, max_results=max_results)
         papers = self.fetch_multiple(pmids)
         return papers
+
+    def download_pdf(self, paper_id: str, output_dir: str = "articles/packages") -> Optional[str]:
+        """
+        Download tar.gz package from PubMed Central OA Service
+
+        Args:
+            paper_id: PMID or PMC ID
+            output_dir: Directory to save tar.gz package
+
+        Returns:
+            Path to downloaded tar.gz file or None if not available
+        """
+        self._rate_limit()
+
+        # Get PMC ID if we have PMID
+        pmc_id = None
+        if paper_id.startswith("PMC"):
+            pmc_id = paper_id
+            print(f"Using provided PMC ID: {pmc_id}")
+        else:
+            # Try to get PMC ID from PMID
+            print(f"Fetching PMC ID for PMID {paper_id}...")
+            pmc_id = self._get_pmc_id(paper_id)
+            if pmc_id:
+                print(f"  Found PMC ID: {pmc_id}")
+
+        if not pmc_id:
+            print(f"✗ No PMC ID found for {paper_id} - package not available")
+            return None
+
+        # Create output directory
+        output_path = Path(output_dir)
+        output_path.mkdir(parents=True, exist_ok=True)
+
+        try:
+            # Use PMC OA Service to get tar.gz package
+            print(f"Accessing PMC OA Service...")
+            oa_url = f"https://www.ncbi.nlm.nih.gov/pmc/utils/oa/oa.fcgi?id={pmc_id}"
+            response = requests.get(oa_url, timeout=self.timeout)
+            response.raise_for_status()
+
+            # Parse XML response
+            root = ET.fromstring(response.content)
+            record = root.find(".//record")
+
+            if record is None:
+                print(f"✗ No OA record found for {pmc_id}")
+                return None
+
+            # Get link to tar.gz package
+            link = record.find("link[@format='tgz']")
+            if link is None:
+                print(f"✗ No tar.gz package available for {pmc_id}")
+                return None
+
+            package_url = link.get('href')
+            print(f"  Found package URL: {package_url}")
+
+            # Convert FTP to HTTPS (requests doesn't support FTP)
+            if package_url.startswith('ftp://'):
+                package_url = package_url.replace('ftp://', 'https://')
+                print(f"  Using HTTPS: {package_url}")
+
+            # Download tar.gz package
+            print(f"  Downloading tar.gz package...")
+            self._rate_limit()  # Rate limit before download
+
+            package_response = requests.get(package_url, timeout=60, stream=True)
+            package_response.raise_for_status()
+
+            # Save tar.gz file
+            filename = f"{pmc_id}.tar.gz"
+            output_file = output_path / filename
+
+            with open(output_file, 'wb') as f:
+                for chunk in package_response.iter_content(chunk_size=8192):
+                    f.write(chunk)
+
+            file_size = output_file.stat().st_size
+            print(f"✓ Downloaded tar.gz package to {output_file} ({file_size / 1024:.1f} KB)")
+
+            return str(output_file)
+
+        except Exception as e:
+            print(f"✗ Download failed: {e}")
+            return None

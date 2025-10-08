@@ -1,3 +1,17 @@
 .idea
 .venv
 /.env
+
+# Downloaded articles (PDFs and metadata)
+articles/
+*.pdf
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Logs
+*.log

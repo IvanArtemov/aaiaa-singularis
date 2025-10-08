@@ -17,8 +17,18 @@ class Settings:
         llm_config_path: str = "src/config/llm_config.yaml",
         fetcher_config_path: str = "src/config/fetcher_config.yaml"
     ):
-        self.llm_config_path = Path(llm_config_path)
-        self.fetcher_config_path = Path(fetcher_config_path)
+        # Get project root from environment or auto-detect
+        project_root = os.getenv("PROJECT_ROOT")
+        if project_root:
+            self.project_root = Path(project_root)
+        else:
+            # Auto-detect: go up from this file to project root
+            self.project_root = Path(__file__).parent.parent.parent
+
+        # Build absolute paths
+        self.llm_config_path = self.project_root / llm_config_path
+        self.fetcher_config_path = self.project_root / fetcher_config_path
+
         self._config = self._load_config(self.llm_config_path)
         self._fetcher_config = self._load_config(self.fetcher_config_path) if self.fetcher_config_path.exists() else {}
         self._validate_config()

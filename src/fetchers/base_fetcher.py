@@ -20,6 +20,7 @@ class PaperMetadata:
     full_text_url: Optional[str] = None
     pdf_url: Optional[str] = None
     citations_count: int = 0
+    has_free_full_text: bool = False    # Indicates if free full text is available
 
     def __post_init__(self):
         if self.authors is None:
@@ -80,6 +81,20 @@ class BaseFetcher(ABC):
 
         Returns:
             str: Full text content or None if not available
+        """
+        pass
+
+    @abstractmethod
+    def download_pdf(self, paper_id: str, output_dir: str = "articles/pdfs") -> Optional[str]:
+        """
+        Download PDF of paper (if available)
+
+        Args:
+            paper_id: Paper identifier (PMID, DOI, etc.)
+            output_dir: Directory to save PDF
+
+        Returns:
+            str: Path to downloaded PDF file, or None if not available
         """
         pass
 
