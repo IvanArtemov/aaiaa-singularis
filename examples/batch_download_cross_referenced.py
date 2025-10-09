@@ -83,57 +83,59 @@ TOPICS = [
         "description": "Protein aggregation in neurodegeneration and aging",
         "block": "Proteostasis & Protein Aggregation"
     },
-    {
-        "query": "autophagy lysosomal degradation aging",
-        "description": "Autophagy and lysosomal degradation (clears aggregates from topic 1)",
-        "block": "Proteostasis & Protein Aggregation"
-    },
-    {
-        "query": "ubiquitin proteasome system aging",
-        "description": "Ubiquitin-proteasome system (alternative clearance to topic 2)",
-        "block": "Proteostasis & Protein Aggregation"
-    },
-    {
-        "query": "DNA damage repair aging",
-        "description": "DNA damage and repair systems",
-        "block": "DNA Damage & Repair"
-    },
-    {
-        "query": "telomere attrition telomerase aging",
-        "description": "Telomere shortening and telomerase (linked to DNA damage)",
-        "block": "DNA Damage & Repair"
-    },
-    {
-        "query": "genome instability somatic mutations aging",
-        "description": "Genome instability and somatic mutations (consequence of topics 4, 5)",
-        "block": "DNA Damage & Repair"
-    },
-    {
-        "query": "stem cell exhaustion aging",
-        "description": "Stem cell exhaustion with age",
-        "block": "Stem Cells & Regeneration"
-    },
-    {
-        "query": "tissue regeneration aging inflammation",
-        "description": "Tissue regeneration and inflammation (requires stem cells)",
-        "block": "Stem Cells & Regeneration"
-    },
-    {
-        "query": "hematopoietic stem cells aging",
-        "description": "HSC aging as stem cell model (specific case of topic 7)",
-        "block": "Stem Cells & Regeneration"
-    },
-    {
-        "query": "intercellular communication aging extracellular vesicles",
-        "description": "Intercellular communication via exosomes (bridges all blocks)",
-        "block": "Intercellular Communication (Bridging)"
-    }
+    # {
+    #     "query": "autophagy lysosomal degradation aging",
+    #     "description": "Autophagy and lysosomal degradation (clears aggregates from topic 1)",
+    #     "block": "Proteostasis & Protein Aggregation"
+    # },
+    # {
+    #     "query": "ubiquitin proteasome system aging",
+    #     "description": "Ubiquitin-proteasome system (alternative clearance to topic 2)",
+    #     "block": "Proteostasis & Protein Aggregation"
+    # },
+    # {
+    #     "query": "DNA damage repair aging",
+    #     "description": "DNA damage and repair systems",
+    #     "block": "DNA Damage & Repair"
+    # },
+    # {
+    #     "query": "telomere attrition telomerase aging",
+    #     "description": "Telomere shortening and telomerase (linked to DNA damage)",
+    #     "block": "DNA Damage & Repair"
+    # },
+    # {
+    #     "query": "genome instability somatic mutations aging",
+    #     "description": "Genome instability and somatic mutations (consequence of topics 4, 5)",
+    #     "block": "DNA Damage & Repair"
+    # },
+    # {
+    #     "query": "stem cell exhaustion aging",
+    #     "description": "Stem cell exhaustion with age",
+    #     "block": "Stem Cells & Regeneration"
+    # },
+    # {
+    #     "query": "tissue regeneration aging inflammation",
+    #     "description": "Tissue regeneration and inflammation (requires stem cells)",
+    #     "block": "Stem Cells & Regeneration"
+    # },
+    # {
+    #     "query": "hematopoietic stem cells aging",
+    #     "description": "HSC aging as stem cell model (specific case of topic 7)",
+    #     "block": "Stem Cells & Regeneration"
+    # },
+    # {
+    #     "query": "intercellular communication aging extracellular vesicles",
+    #     "description": "Intercellular communication via exosomes (bridges all blocks)",
+    #     "block": "Intercellular Communication (Bridging)"
+    # }
 ]
 
 # Configuration
 ARTICLES_PER_TOPIC = 50
 OUTPUT_DIR = "articles/packages"
 REGISTRY_PATH = "articles/metadata.json"
+EXCLUDE_REVIEWS = True  # Exclude Review articles from search
+EXCLUDE_META_ANALYSIS = True  # Exclude Meta-Analysis articles
 
 
 def print_separator(title: str = "", char: str = "="):
@@ -144,6 +146,37 @@ def print_separator(title: str = "", char: str = "="):
         print(f"{char * 80}\n")
     else:
         print(f"{char * 80}\n")
+
+
+def build_search_query(base_query: str, free_full_text: bool = True,
+                       exclude_reviews: bool = True, exclude_meta_analysis: bool = False) -> str:
+    """
+    Build PubMed search query with filters
+
+    Args:
+        base_query: Base search query
+        free_full_text: Add free full text filter
+        exclude_reviews: Exclude Review articles
+        exclude_meta_analysis: Exclude Meta-Analysis articles
+
+    Returns:
+        Complete search query with filters
+    """
+    query = base_query
+
+    # Add free full text filter
+    if free_full_text:
+        query += " AND free full text[filter]"
+
+    # Exclude Review articles
+    if exclude_reviews:
+        query += " NOT Review[Publication Type]"
+
+    # Exclude Meta-Analysis articles
+    if exclude_meta_analysis:
+        query += " NOT Meta-Analysis[Publication Type]"
+
+    return query
 
 
 def print_topic_info(topic_num: int, topic: Dict[str, str]):
@@ -178,6 +211,8 @@ def main():
     print(f"  Articles per topic: {ARTICLES_PER_TOPIC}")
     print(f"  Expected total: ~{len(TOPICS) * ARTICLES_PER_TOPIC} articles")
     print(f"  Free full text filter: ENABLED")
+    print(f"  Exclude Reviews: {'ENABLED' if EXCLUDE_REVIEWS else 'DISABLED'}")
+    print(f"  Exclude Meta-Analysis: {'ENABLED' if EXCLUDE_META_ANALYSIS else 'DISABLED'}")
     print(f"  Output directory: {OUTPUT_DIR}")
     print(f"  Registry: {REGISTRY_PATH}")
     print(f"\nCurrent registry status:")
@@ -199,12 +234,21 @@ def main():
         topic_failed = 0
 
         try:
+            # Build search query with filters
+            search_query = build_search_query(
+                topic["query"],
+                free_full_text=True,
+                exclude_reviews=EXCLUDE_REVIEWS,
+                exclude_meta_analysis=EXCLUDE_META_ANALYSIS
+            )
+
             # Search for articles
             print(f"\n[1/3] Searching for articles...")
+            print(f"  Query: {search_query}")
             pmids = fetcher.search(
-                topic["query"],
+                search_query,
                 max_results=ARTICLES_PER_TOPIC,
-                free_full_text=True
+                free_full_text=False  # Already included in query
             )
             total_searched += len(pmids)
             print(f"  ✓ Found {len(pmids)} articles")
