@@ -1,4 +1,8 @@
-# 🤖 Claude Code - Project Context
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+---
 
 ## 📋 О проекте
 
@@ -50,85 +54,288 @@
 
 ---
 
-## 🧩 Допустимые подходы
+## 💻 Development Commands
 
-| Подход | Описание | Статус |
-|--------|----------|--------|
-| 🧠 **Pure Algorithmic** | Регулярные выражения и правила без LLM | ✅ Приветствуется |
-| ⚡ **Hybrid Approach** | LLM + алгоритмы/regex | ✅ **Рекомендуется** |
-| 🚫 **LLM-only** | Чистое LLM-решение | ❌ Не подходит (стоимость, время) |
+### Installation
+```bash
+# Install all dependencies
+pip install -r requirements.txt
 
-**Почему гибридный подход?**
-- Значительное снижение стоимости при сохранении качества
-- LLM используется только для сложных задач
-- Простые паттерны обрабатываются regex/heuristics
-- Масштабируемость на миллионы статей
+# Set up environment variables
+cp .env.example .env
+# Edit .env and add your OPENAI_API_KEY
+```
+
+### Running Tests
+```bash
+# Run all tests
+pytest
+
+# Run with verbose output
+pytest -v
+
+# Run only integration tests
+pytest tests/integration/ -v
+
+# Run with coverage report
+pytest --cov=src --cov-report=term-missing
+
+# Generate HTML coverage report
+pytest --cov=src --cov-report=html
+# Open htmlcov/index.html in browser
+```
+
+### Running Examples
+
+```bash
+# Test LLM adapters (OpenAI/Ollama)
+python examples/example_adapters.py
+
+# Test PubMed fetcher
+python examples/example_fetchers.py
+
+# Download PDFs from PubMed
+python examples/download_pdfs_demo.py
+
+# Extract PDFs from PMC packages
+python examples/extract_pdfs_from_packages.py
+
+# Batch download by topic
+python examples/batch_download_cross_referenced.py
+
+# Test PDF parser
+python examples/example_pdf_parser.py
+
+# Test LLM extraction pipeline
+python examples/example_llm_pipeline.py
+
+# Generate SVG knowledge graph
+python examples/generate_svg.py results/sample_result.json
+```
+
+### Configuration
+
+**Switch LLM Provider (OpenAI ↔ Ollama):**
+Edit `src/config/llm_config.yaml`:
+```yaml
+active_provider: "openai"  # or "ollama"
+```
+
+**PubMed API Key (optional but recommended):**
+Add to `.env`:
+```
+NCBI_API_KEY=your_api_key_here
+```
+This increases rate limit from 3 req/sec to 10 req/sec.
 
 ---
 
-## 🛠️ Технический стек (утверждён)
+## 🏗️ Code Architecture
 
-### Core
+### High-Level Design Principles
+
+**1. Factory Pattern for Extensibility**
+- `get_llm_adapter(provider)` - Create LLM adapters (OpenAI, Ollama, etc.)
+- `get_fetcher(type)` - Create paper fetchers (PubMed, PMC, etc.)
+- `get_parser(format)` - Create document parsers (PDF, TXT, HTML)
+
+**2. Pipeline Abstraction**
+All extraction pipelines inherit from `BasePipeline`:
+- `LLMPipeline` - High-quality extraction using GPT (~$0.03-$0.30/paper)
+- `RegexPipeline` - Pattern-based extraction (free, lower quality)
+- `HybridPipeline` - Optimal balance (~$0.02/paper target)
+
+Each pipeline implements:
+```python
+def extract(paper_text: str, paper_id: str) -> ExtractionResult
+def get_metrics() -> PipelineMetrics
+def get_description() -> str
+def get_estimated_cost() -> float
+```
+
+**3. Type-Safe Data Models**
+- `Entity` - Structured entity with `EntityType` enum
+- `Relationship` - Typed relationship with `RelationshipType` enum
+- `KnowledgeGraph` - Collection of entities and relationships
+- `ExtractionResult` - Complete pipeline output with metrics
+
+**4. Configuration Management**
+- YAML-based configs: `src/config/llm_config.yaml`, `fetcher_config.yaml`
+- Environment variables for API keys
+- `Settings` class centralizes configuration access
+
+**5. Modular Component Design**
+```
+Input → Parser → Pipeline → Extractor → Model → Validator → Output
+```
+
+---
+
+## 📦 Key Modules
+
+### Core Data Models (`src/models/`)
+
+**`entities.py`** - Core data structures:
+- `EntityType` enum: FACT, HYPOTHESIS, EXPERIMENT, TECHNIQUE, RESULT, DATASET, ANALYSIS, CONCLUSION
+- `RelationshipType` enum: HYPOTHESIS_TO_EXPERIMENT, METHOD_TO_RESULT, etc.
+- `Entity` class: id, type, text, confidence, source_section, metadata
+- `Relationship` class: source_id, target_id, relationship_type, confidence
+
+**`graph.py`** - Knowledge graph structure:
+- `KnowledgeGraph` class: paper_id, entities, relationships
+- Conversion to NetworkX graphs for visualization
+
+**`results.py`** - Pipeline outputs:
+- `ExtractionResult`: paper_id, entities (grouped by type), relationships, metrics
+- `PipelineMetrics`: processing_time, tokens_used, cost_usd, entities_extracted
+
+### Extraction Pipelines (`src/pipelines/`)
+
+**`base_pipeline.py`** - Abstract base class:
+- Defines contract for all extraction pipelines
+- Standardized interface for metrics collection
+
+**`llm_pipeline.py`** - LLM-based extraction:
+- Uses GPT-4o-mini (or configurable model) via OpenAI SDK
+- Structured JSON output with few-shot prompting
+- Cost: ~$0.03/paper (GPT-4o-mini) or ~$0.30/paper (GPT-4)
+- Use case: Ground truth generation, high-quality baseline
+
+### LLM Adapters (`src/llm_adapters/`)
+
+**Factory-based LLM abstraction:**
+- `base_adapter.py` - Abstract interface
+- `openai_adapter.py` - OpenAI/ChatGPT implementation
+- `ollama_adapter.py` - Local Ollama implementation
+- `factory.py` - `get_llm_adapter(provider)` factory function
+
+**Usage:**
+```python
+from src.llm_adapters import get_llm_adapter
+
+llm = get_llm_adapter("openai")  # or "ollama"
+result = llm.generate(prompt="...", system_prompt="...")
+embeddings = llm.embed(["text1", "text2"])
+```
+
+### Paper Fetchers (`src/fetchers/`)
+
+**PubMed E-utilities integration:**
+- `base_fetcher.py` - Abstract fetcher interface
+- `pubmed_fetcher.py` - PubMed API implementation
+- `factory.py` - `get_fetcher(type)` factory
+
+**Features:**
+- Search by query: `fetcher.search("aging research", max_results=10)`
+- Fetch metadata: `paper = fetcher.fetch_paper(pmid)`
+- Download PDFs: Full-text PDF download for open-access papers
+- Article registry: Track downloaded papers in `articles/metadata.json`
+
+### Document Parsers (`src/parsers/`)
+
+**Multi-format document parsing:**
+- `base_parser.py` - Abstract parser interface
+- `pdf_parser.py` - PDF parsing using PyMuPDF (fitz)
+  - Text extraction with layout preservation
+  - Section detection (Abstract, Methods, Results, etc.)
+  - Metadata extraction (title, authors, dates)
+  - Optional table extraction via pdfplumber
+
+**Section Detection:**
+Automatically detects common paper sections using regex patterns:
+- Abstract, Introduction, Methods, Results, Discussion, Conclusion, References
+
+### Visualization (`src/visualization/`)
+
+**`generate_svg.py`** - SVG knowledge graph generator:
+- Hierarchical layout with entity types in columns
+- Color-coded entities and relationships
+- Bezier curve edges with arrow markers
+- XML-safe text escaping
+- Auto-sizing based on content
+
+**Usage:**
+```bash
+python -m src.visualization.generate_svg results/output.json graph.svg
+```
+
+### Utilities (`src/utils/`)
+
+**`article_registry.py`** - Article metadata tracking:
+- SQLite-like JSON registry for downloaded papers
+- Track PMID, PMC ID, DOI, PDF path, download source
+- Statistics: total articles, size, source breakdown
+- Deduplication and lookup by any identifier
+
+---
+
+## 💡 Cost Optimization Strategy
+
+### Three-Pipeline Approach
+
+**1. LLM Pipeline (Ground Truth)**
+- Model: GPT-4 or GPT-4o-mini
+- Cost: $0.03-$0.30 per paper
+- Precision: ~95% (expected)
+- Use: Create 10-15 annotated papers as ground truth
+
+**2. Regex Pipeline (Baseline)**
+- Cost: $0.00 (CPU only)
+- Precision: ~60-70% (expected)
+- Speed: 200-300 papers/hour
+- Use: Fast processing, simple pattern matching
+
+**3. Hybrid Pipeline (Production Target)**
+- Cost: ~$0.02 per paper
+- Precision: ≥85% (target)
+- Strategy:
+  1. Regex for simple patterns (Methods, Results)
+  2. NLP (spaCy) for entity recognition (Facts)
+  3. Selective LLM for complex reasoning (Hypotheses, Conclusions)
+
+**Decision Algorithm:**
+```
+If regex confidence > 0.8:
+    Use regex result (FREE)
+Elif entity_type in [facts, techniques]:
+    Use NLP extractor (~$0.001/paper)
+Elif entity_type in [hypotheses, conclusions]:
+    Use LLM selectively (~$0.01/paper)
+```
+
+### Optimization Techniques
+1. **Batch processing** - Combine multiple sections into single API call
+2. **Caching** - LRU cache for identical text segments
+3. **Model selection** - GPT-4o-mini instead of GPT-4 (20x cheaper)
+4. **Chunking** - Process only relevant sections, not full papers
+
+---
+
+## 🛠️ Технический стек
+
+### Core (Existing)
 - **Python 3.10+**
-- **ChromaDB** - векторная база данных
-- **GPT-4o-mini API** - основная LLM (экономично!)
-- **LangChain** - фреймворк для RAG
-- **OpenAI Embeddings** - text-embedding-3-small
+- **OpenAI SDK** - GPT-4o-mini for LLM extraction
+- **PyMuPDF (fitz)** - PDF text extraction
+- **pdfplumber** - PDF table extraction
+- **requests** - HTTP client for API calls
+- **python-dotenv** - Environment variable management
+- **pyyaml** - YAML configuration parsing
 
-### Парсинг
-- **PyMuPDF (fitz)** - PDF extraction
-- **BeautifulSoup4** - HTML parsing
-- **pdfplumber** - таблицы из PDF
+### Testing
+- **pytest** - Test framework
+- **pytest-cov** - Coverage reporting
 
-### Интерфейс
-- **Streamlit** - UI для демо
-- **FastAPI** - REST API (опционально)
-
----
-
-## 🏗️ Архитектура: RAG Pipeline
-
+### Future Dependencies (Planned)
+```python
+# Will be added as needed:
+chromadb>=0.4.0          # Vector database
+streamlit>=1.28.0        # Web UI
+spacy>=3.7.0             # NLP for hybrid pipeline
+scispacy>=0.5.0          # Scientific text processing
+networkx>=3.2.0          # Graph processing
+plotly>=5.17.0           # Interactive visualizations
 ```
-1. Document Ingestion
-   └─ PDF → Text extraction → Chunking → Section detection
-
-2. Embedding & Storage
-   └─ OpenAI Embeddings → ChromaDB → Metadata mapping
-
-3. Retrieval Layer
-   └─ Query → Semantic search → Context retrieval
-
-4. Extraction Layer (GPT-4o-mini)
-   └─ Prompt engineering → Structured JSON output
-
-5. Knowledge Graph (v2.0)
-   └─ Entity extraction → Relationship mapping → Graph construction
-
-6. Output Layer
-   └─ Structured JSON → REST API → Web UI
-```
-
----
-
-## 📅 Timeline
-
-### Week 1 (7-13 октября) - MVP
-- [ ] Setup окружения (ChromaDB, OpenAI API)
-- [ ] Базовый pipeline: PDF → Embeddings → ChromaDB
-- [ ] Простой extraction с GPT-4o-mini
-- [ ] Тест на 3-5 статьях
-
-### Week 2 (14-20 октября) - Улучшение
-- [ ] Оптимизация промптов
-- [ ] Metadata фильтры
-- [ ] Тестирование на 20-30 статьях
-- [ ] Оценка качества (эксперт: Татьяна)
-
-### Week 3 (21-22 октября) - Финализация
-- [ ] Веб-интерфейс (Streamlit)
-- [ ] Деплой (Hugging Face Spaces / Streamlit Cloud)
-- [ ] Видео-демо (3-5 минут)
-- [ ] Submit до дедлайна
 
 ---
 
@@ -138,15 +345,11 @@
 - **Precision:** % корректно извлеченных элементов
 - **Recall:** % найденных элементов от всех существующих
 - **F1 Score:** Гармоническое среднее precision и recall
-- Измеряется для каждого типа элемента и связи
-- Правильность извлечения ссылок и цитирований
-- Корректная идентификация отношений между элементами
 
 ### 2. Робастность (25%)
 - **Форматы:** Обработка PDF, HTML, XML
 - **Стабильность:** Работа с разными журналами и стилями написания
 - **Error Handling:** Восстановление после ошибок
-- **Разнообразие:** Адаптация к различным структурам статей
 
 ### 3. Стоимостный Анализ (25%)
 - **CPU/GPU часы:** Использованные вычислительные ресурсы
@@ -156,18 +359,16 @@
 
 ### 4. Производительность (25%)
 - **Throughput:** Статей обработано в час
-- **Latency:** Время отклика на фиксированном железе
-- **Parallelization:** Способность к горизонтальному масштабированию
+- **Latency:** Время отклика
+- **Parallelization:** Горизонтальное масштабирование
 
 ---
 
 ## ⭐ BONUS POINTS
 
-Дополнительные баллы присуждаются за:
+1. **Алгоритмические или гибридные решения** с значительным снижением стоимости при сохранении качества
 
-1. **Алгоритмические или гибридные решения** с значительным снижением стоимости при сохранении качества, сопоставимого с LLM-only системами
-
-2. **Улучшение концептуального фреймворка** или дополнительные инновации:
+2. **Улучшение концептуального фреймворка:**
    - Новые техники извлечения
    - Улучшенное определение связей
    - Оптимизированные структуры графа
@@ -178,48 +379,22 @@
 ## 📝 Требования к подаче
 
 ✅ **Обязательно:**
-- 🎥 **Видео-демо** (3-5 минут) - демонстрация работы системы
-- 💻 **Открытый репозиторий** с README и документацией
-- 🌐 **Развернутое решение** (публичный URL для тестирования)
+- 🎥 **Видео-демо** (3-5 минут)
+- 💻 **Открытый репозиторий** с README
+- 🌐 **Развернутое решение** (публичный URL)
 - 📄 **Описание подхода** - архитектура, методология
 - 📊 **Performance metrics** - Precision, Recall, F1, Throughput, Cost
-- 💰 **Cost analysis** - Детальная разбивка стоимости обработки
+- 💰 **Cost analysis** - Детальная разбивка
 
 ⚠️ **Важно:** Жюри НЕ будет запускать код локально!
 
 ---
 
-## 💡 KEY INSIGHTS
+## 🔗 Дополнительная документация
 
-### Что делает это сложным?
-1. **Масштаб:** 50 миллионов статей для обработки
-2. **Стоимость:** LLM inference дорогой на больших масштабах
-3. **Точность:** Необходимо поддерживать высокие precision и recall
-4. **Разнообразие:** Различные форматы, журналы, стили написания
-5. **Связи:** Сложные отношения между элементами графа
-
-### Почему это важно?
-1. **Научный прогресс:** Ускорение открытий и поиска знаний
-2. **Истинная заслуга:** Оценка вклада, а не престижа журнала
-3. **Доступность:** Упрощение поиска релевантных исследований
-4. **Эффективность:** Экономия времени исследователей
-5. **Инновации:** Новые способы научного сотрудничества
-
----
-
-## 🔗 Полная документация
-
-**См. детали:** [`docs/singularis_project_doc.md`](/Users/ivanartemov/PycharmProjects/AAIAA/docs/singularis_project_doc.md)
-
----
-
-## 💡 Стратегия экономии
-
-1. **GPT-4o-mini** вместо GPT-4 (~20x дешевле)
-2. **Эффективный chunking** (chunk_size=1000, overlap=200)
-3. **Кэширование embeddings** в ChromaDB
-4. **Batch processing** + async для API
-5. **Гибридный подход**: LLM только для сложных задач
+- **Полная спецификация:** `docs/singularis_project_doc.md`
+- **Pipeline архитектура:** `docs/pipeline_architecture_plan.md`
+- **PubMed API reference:** `docs/pubmed_api_reference.md`
 
 ---
 
@@ -231,5 +406,5 @@
 
 ---
 
-**Последнее обновление:** 7 октября 2025
-**Статус:** Начало разработки MVP
+**Последнее обновление:** 11 октября 2025
+**Статус:** Active Development - Week 1 (MVP)

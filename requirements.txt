@@ -12,6 +12,10 @@ PyMuPDF>=1.23.0        # PDF text extraction
 pdfplumber>=0.10.0     # PDF table extraction (optional)
 OpenAI>=2.3.0
 
+# Telegram Bot
+python-telegram-bot>=20.0  # Telegram Bot API
+aiofiles>=23.0             # Async file operations
+
 # Future dependencies for full pipeline
 # chromadb>=0.4.0  # Vector database
 # streamlit>=1.28.0  # UI
