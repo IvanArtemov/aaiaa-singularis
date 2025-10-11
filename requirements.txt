@@ -7,7 +7,11 @@ pyyaml>=6.0.1
 pytest>=7.4.0
 pytest-cov>=4.1.0
 
+# PDF Parsing
+PyMuPDF>=1.23.0        # PDF text extraction
+pdfplumber>=0.10.0     # PDF table extraction (optional)
+OpenAI>=2.3.0
+
 # Future dependencies for full pipeline
-# PyMuPDF>=1.23.0  # PDF parsing
 # chromadb>=0.4.0  # Vector database
 # streamlit>=1.28.0  # UI
