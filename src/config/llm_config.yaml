@@ -11,7 +11,7 @@ openai:
 
   # Models
   models:
-    chat: "gpt-4o-mini"
+    chat: "gpt-5-mini"
     embeddings: "text-embedding-3-small"
 
   # Parameters

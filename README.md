@@ -38,6 +38,9 @@ python examples/example_adapters.py
 
 # Paper fetcher example
 python examples/example_fetchers.py
+
+# Telegram Bot (requires TELEGRAM_BOT_TOKEN in .env)
+python examples/run_telegram_bot.py
 ```
 
 ### 5. Run Tests
@@ -239,14 +242,49 @@ AAIAA/
 
 ---
 
+## 🤖 Telegram Bot
+
+**PDF to Knowledge Graph Bot**
+
+Автоматический анализ научных статей через Telegram! Отправьте PDF - получите граф знаний.
+
+### Quick Start
+
+1. Получите токен от [@BotFather](https://t.me/botfather)
+2. Добавьте в `.env`:
+   ```bash
+   TELEGRAM_BOT_TOKEN=your_bot_token
+   ```
+3. Запустите бота:
+   ```bash
+   python examples/run_telegram_bot.py
+   ```
+
+### Функциональность
+
+- ✅ Принимает PDF научных статей
+- ✅ Извлекает сущности (факты, гипотезы, эксперименты, результаты)
+- ✅ Строит граф знаний
+- ✅ Генерирует SVG визуализацию
+- ✅ Rate limiting (5 запросов/час)
+- ✅ Статистика использования
+
+### Подробнее
+
+См. [`bot/README.md`](bot/README.md) для полной документации.
+
+---
+
 ## 📝 Next Steps
 
 1. ✅ LLM adapters created
 2. ✅ Paper fetchers created (PubMed)
-3. 🔄 Create document loader module
-4. 🔄 Create text processor module
-5. 🔄 Create RAG pipeline
-6. 🔄 Create UI with Streamlit
+3. ✅ PDF Parser implemented
+4. ✅ LLM Pipeline implemented
+5. ✅ SVG visualization created
+6. ✅ **Telegram Bot completed**
+7. 🔄 Create RAG pipeline
+8. 🔄 Create UI with Streamlit
 
 ---
 

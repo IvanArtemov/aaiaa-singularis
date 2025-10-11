@@ -1,0 +1,595 @@
+<svg width="1762" height="1642" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+        <!-- Стрілки для кожного типу зв'язку -->
+        <marker id="arrow-fact_to_hypothesis" viewBox="0 -5 10 10" refX="8" refY="0" 
+                markerWidth="5" markerHeight="5" orient="auto">
+            <path d="M0,-5L10,0L0,5" fill="#66BB6A"/>
+        </marker>
+        <marker id="arrow-hypothesis_to_method" viewBox="0 -5 10 10" refX="8" refY="0" 
+                markerWidth="5" markerHeight="5" orient="auto">
+            <path d="M0,-5L10,0L0,5" fill="#FF9800"/>
+        </marker>
+        <marker id="arrow-method_to_result" viewBox="0 -5 10 10" refX="8" refY="0" 
+                markerWidth="5" markerHeight="5" orient="auto">
+            <path d="M0,-5L10,0L0,5" fill="#9C27B0"/>
+        </marker>
+        <marker id="arrow-result_to_conclusion" viewBox="0 -5 10 10" refX="8" refY="0" 
+                markerWidth="5" markerHeight="5" orient="auto">
+            <path d="M0,-5L10,0L0,5" fill="#1E88E5"/>
+        </marker>
+    </defs>
+    
+    <!-- Заголовки колонок -->
+    <text x="150" y="30" text-anchor="middle" font-size="16" font-weight="bold" fill="#495057">
+        Facts
+    </text>
+    <text x="500" y="30" text-anchor="middle" font-size="16" font-weight="bold" fill="#495057">
+        Hypotheses
+    </text>
+    <text x="850" y="30" text-anchor="middle" font-size="16" font-weight="bold" fill="#495057">
+        Methods
+    </text>
+    <text x="1200" y="30" text-anchor="middle" font-size="16" font-weight="bold" fill="#495057">
+        Results
+    </text>
+    <text x="1550" y="30" text-anchor="middle" font-size="16" font-weight="bold" fill="#495057">
+        Conclusions
+    </text>
+    <!-- Ребра -->
+    <path d="M250.0,152 C350.0,152 300.0,152 400.0,152"
+          stroke="#66BB6A" stroke-width="2" fill="none" opacity="0.8"
+          marker-end="url(#arrow-fact_to_hypothesis)" stroke-dasharray="6,3"/>
+    <path d="M250.0,284 C350.0,284 300.0,152 400.0,152"
+          stroke="#66BB6A" stroke-width="2" fill="none" opacity="0.8"
+          marker-end="url(#arrow-fact_to_hypothesis)" stroke-dasharray="6,3"/>
+    <path d="M600.0,152 C700.0,152 650.0,192 750.0,192"
+          stroke="#FF9800" stroke-width="2" fill="none" opacity="0.8"
+          marker-end="url(#arrow-hypothesis_to_method)" />
+    <path d="M950.0,192 C1050.0,192 1000.0,168 1100.0,168"
+          stroke="#9C27B0" stroke-width="2" fill="none" opacity="0.8"
+          marker-end="url(#arrow-method_to_result)" />
+    <path d="M1300.0,168 C1400.0,168 1346.0,168 1446.0,168"
+          stroke="#1E88E5" stroke-width="2" fill="none" opacity="0.8"
+          marker-end="url(#arrow-result_to_conclusion)" />
+    <path d="M600.0,152 C700.0,152 650.0,908 750.0,908"
+          stroke="#FF9800" stroke-width="2" fill="none" opacity="0.8"
+          marker-end="url(#arrow-hypothesis_to_method)" />
+    <path d="M950.0,908 C1050.0,908 1000.0,1184 1100.0,1184"
+          stroke="#9C27B0" stroke-width="2" fill="none" opacity="0.8"
+          marker-end="url(#arrow-method_to_result)" />
+    <path d="M250.0,284 C350.0,284 288.0,276 388.0,276"
+          stroke="#66BB6A" stroke-width="2" fill="none" opacity="0.8"
+          marker-end="url(#arrow-fact_to_hypothesis)" stroke-dasharray="6,3"/>
+    <path d="M612.0,276 C712.0,276 650.0,356 750.0,356"
+          stroke="#FF9800" stroke-width="2" fill="none" opacity="0.8"
+          marker-end="url(#arrow-hypothesis_to_method)" />
+    <path d="M950.0,356 C1050.0,356 1000.0,316 1100.0,316"
+          stroke="#9C27B0" stroke-width="2" fill="none" opacity="0.8"
+          marker-end="url(#arrow-method_to_result)" />
+    <path d="M1300.0,316 C1400.0,316 1350.0,332 1450.0,332"
+          stroke="#1E88E5" stroke-width="2" fill="none" opacity="0.8"
+          marker-end="url(#arrow-result_to_conclusion)" />
+    <path d="M250.0,416 C350.0,416 300.0,408 400.0,408"
+          stroke="#66BB6A" stroke-width="2" fill="none" opacity="0.8"
+          marker-end="url(#arrow-fact_to_hypothesis)" stroke-dasharray="6,3"/>
+    <path d="M250.0,540 C350.0,540 300.0,408 400.0,408"
+          stroke="#66BB6A" stroke-width="2" fill="none" opacity="0.8"
+          marker-end="url(#arrow-fact_to_hypothesis)" stroke-dasharray="6,3"/>
+    <path d="M600.0,408 C700.0,408 650.0,480 750.0,480"
+          stroke="#FF9800" stroke-width="2" fill="none" opacity="0.8"
+          marker-end="url(#arrow-hypothesis_to_method)" />
+    <path d="M950.0,480 C1050.0,480 1000.0,848 1100.0,848"
+          stroke="#9C27B0" stroke-width="2" fill="none" opacity="0.8"
+          marker-end="url(#arrow-method_to_result)" />
+    <path d="M1300.0,848 C1400.0,848 1350.0,480 1450.0,480"
+          stroke="#1E88E5" stroke-width="2" fill="none" opacity="0.8"
+          marker-end="url(#arrow-result_to_conclusion)" />
+    <path d="M950.0,480 C1050.0,480 1000.0,1012 1100.0,1012"
+          stroke="#9C27B0" stroke-width="2" fill="none" opacity="0.8"
+          marker-end="url(#arrow-method_to_result)" />
+    <path d="M1300.0,1012 C1400.0,1012 1350.0,480 1450.0,480"
+          stroke="#1E88E5" stroke-width="2" fill="none" opacity="0.8"
+          marker-end="url(#arrow-result_to_conclusion)" />
+    <path d="M250.0,284 C350.0,284 288.0,564 388.0,564"
+          stroke="#66BB6A" stroke-width="2" fill="none" opacity="0.8"
+          marker-end="url(#arrow-fact_to_hypothesis)" stroke-dasharray="6,3"/>
+    <path d="M612.0,564 C712.0,564 650.0,620 750.0,620"
+          stroke="#FF9800" stroke-width="2" fill="none" opacity="0.8"
+          marker-end="url(#arrow-hypothesis_to_method)" />
+    <path d="M950.0,620 C1050.0,620 988.0,464 1088.0,464"
+          stroke="#9C27B0" stroke-width="2" fill="none" opacity="0.8"
+          marker-end="url(#arrow-method_to_result)" />
+    <path d="M1312.0,464 C1412.0,464 1338.0,636 1438.0,636"
+          stroke="#1E88E5" stroke-width="2" fill="none" opacity="0.8"
+          marker-end="url(#arrow-result_to_conclusion)" />
+    <path d="M250.0,284 C350.0,284 300.0,720 400.0,720"
+          stroke="#66BB6A" stroke-width="2" fill="none" opacity="0.8"
+          marker-end="url(#arrow-fact_to_hypothesis)" stroke-dasharray="6,3"/>
+    <path d="M600.0,720 C700.0,720 650.0,768 750.0,768"
+          stroke="#FF9800" stroke-width="2" fill="none" opacity="0.8"
+          marker-end="url(#arrow-hypothesis_to_method)" />
+    <path d="M950.0,768 C1050.0,768 1000.0,660 1100.0,660"
+          stroke="#9C27B0" stroke-width="2" fill="none" opacity="0.8"
+          marker-end="url(#arrow-method_to_result)" />
+    <path d="M1300.0,660 C1400.0,660 1338.0,808 1438.0,808"
+          stroke="#1E88E5" stroke-width="2" fill="none" opacity="0.8"
+          marker-end="url(#arrow-result_to_conclusion)" />
+    <path d="M250.0,416 C350.0,416 300.0,852 400.0,852"
+          stroke="#66BB6A" stroke-width="2" fill="none" opacity="0.8"
+          marker-end="url(#arrow-fact_to_hypothesis)" stroke-dasharray="6,3"/>
+    <path d="M600.0,852 C700.0,852 650.0,1048 750.0,1048"
+          stroke="#FF9800" stroke-width="2" fill="none" opacity="0.8"
+          marker-end="url(#arrow-hypothesis_to_method)" />
+    <path d="M950.0,1048 C1050.0,1048 1000.0,1332 1100.0,1332"
+          stroke="#9C27B0" stroke-width="2" fill="none" opacity="0.8"
+          marker-end="url(#arrow-method_to_result)" />
+    <path d="M1300.0,1332 C1400.0,1332 1350.0,956 1450.0,956"
+          stroke="#1E88E5" stroke-width="2" fill="none" opacity="0.8"
+          marker-end="url(#arrow-result_to_conclusion)" />
+    <!-- Ноди -->
+    <rect x="50.0" y="100.0"
+          width="200" height="104" 
+          fill="#b2ebf2" stroke="#495057" stroke-width="1.5" rx="6"/>
+    <text x="150" y="128.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">COPD is a chronic</text>
+    <text x="150" y="144.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">inflammatory</text>
+    <text x="150" y="160.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">condition with fixed</text>
+    <text x="150" y="176.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">airflow obstruction</text>
+    <rect x="50.0" y="224.0"
+          width="200" height="120" 
+          fill="#b2ebf2" stroke="#495057" stroke-width="1.5" rx="6"/>
+    <text x="150" y="252.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">Significant</text>
+    <text x="150" y="268.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">knowledge gaps on</text>
+    <text x="150" y="284.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">COPD airway</text>
+    <text x="150" y="300.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">histopathology and</text>
+    <text x="150" y="316.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">remodeling</text>
+    <rect x="50.0" y="364.0"
+          width="200" height="104" 
+          fill="#b2ebf2" stroke="#495057" stroke-width="1.5" rx="6"/>
+    <text x="150" y="392.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">Primary cause is</text>
+    <text x="150" y="408.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">tobacco smoke</text>
+    <text x="150" y="424.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">exposure; smoking</text>
+    <text x="150" y="440.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">status relevant</text>
+    <rect x="50.0" y="488.0"
+          width="200" height="104" 
+          fill="#b2ebf2" stroke="#495057" stroke-width="1.5" rx="6"/>
+    <text x="150" y="516.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">Few prior studies</text>
+    <text x="150" y="532.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">compared healthy</text>
+    <text x="150" y="548.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">smokers vs never</text>
+    <text x="150" y="564.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">smokers</text>
+    <rect x="400.0" y="100.0"
+          width="200" height="104" 
+          fill="#ffe082" stroke="#495057" stroke-width="1.5" rx="6"/>
+    <text x="500" y="128.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">Airway inflammation</text>
+    <text x="500" y="144.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">and remodeling</text>
+    <text x="500" y="160.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">differ between COPD</text>
+    <text x="500" y="176.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">and healthy controls</text>
+    <rect x="388.0" y="224.0"
+          width="224" height="104" 
+          fill="#ffe082" stroke="#495057" stroke-width="1.5" rx="6"/>
+    <text x="500" y="252.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">Inflammation/remodeling</text>
+    <text x="500" y="268.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">vary with COPD</text>
+    <text x="500" y="284.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">severity (GOLD I/II</text>
+    <text x="500" y="300.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">vs III/IV)</text>
+    <rect x="400.0" y="348.0"
+          width="200" height="120" 
+          fill="#ffe082" stroke="#495057" stroke-width="1.5" rx="6"/>
+    <text x="500" y="376.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">Among healthy</text>
+    <text x="500" y="392.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">adults, smoking</text>
+    <text x="500" y="408.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">status alters</text>
+    <text x="500" y="424.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">bronchial and BAL</text>
+    <text x="500" y="440.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">lymphocytes</text>
+    <rect x="388.0" y="488.0"
+          width="224" height="152" 
+          fill="#ffe082" stroke="#495057" stroke-width="1.5" rx="6"/>
+    <text x="500" y="516.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">COPD features (GOLD</text>
+    <text x="500" y="532.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">stage, recent</text>
+    <text x="500" y="548.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">exacerbations, blood</text>
+    <text x="500" y="564.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">eosinophils, ICS</text>
+    <text x="500" y="580.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">use) influence</text>
+    <text x="500" y="596.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">biopsy</text>
+    <text x="500" y="612.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">inflammation/remodeling</text>
+    <rect x="400.0" y="660.0"
+          width="200" height="120" 
+          fill="#ffe082" stroke="#495057" stroke-width="1.5" rx="6"/>
+    <text x="500" y="688.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">In COPD,</text>
+    <text x="500" y="704.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">inflammatory cells</text>
+    <text x="500" y="720.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">associate with</text>
+    <text x="500" y="736.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">microvascularity and</text>
+    <text x="500" y="752.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">remodeling indices</text>
+    <rect x="400.0" y="800.0"
+          width="200" height="104" 
+          fill="#ffe082" stroke="#495057" stroke-width="1.5" rx="6"/>
+    <text x="500" y="828.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">Current smoking in</text>
+    <text x="500" y="844.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">COPD increases</text>
+    <text x="500" y="860.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">epithelial mucus</text>
+    <text x="500" y="876.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">cells vs ex-smoking</text>
+    <rect x="750.0" y="100.0"
+          width="200" height="184" 
+          fill="#f48fb1" stroke="#495057" stroke-width="1.5" rx="6"/>
+    <text x="850" y="128.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">Bronchoscopy with</text>
+    <text x="850" y="144.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">BAL and</text>
+    <text x="850" y="160.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">endobronchial</text>
+    <text x="850" y="176.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">biopsies; GMA</text>
+    <text x="850" y="192.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">embedding; IHC</text>
+    <text x="850" y="208.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">quantification;</text>
+    <text x="850" y="224.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">digital image</text>
+    <text x="850" y="240.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">analysis;</text>
+    <text x="850" y="256.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">nonparametric tests</text>
+    <rect x="750.0" y="304.0"
+          width="200" height="104" 
+          fill="#f48fb1" stroke="#495057" stroke-width="1.5" rx="6"/>
+    <text x="850" y="332.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">Group comparisons by</text>
+    <text x="850" y="348.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">GOLD I/II vs III/IV</text>
+    <text x="850" y="364.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">for inflammatory</text>
+    <text x="850" y="380.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">cells and SMA</text>
+    <rect x="750.0" y="428.0"
+          width="200" height="104" 
+          fill="#f48fb1" stroke="#495057" stroke-width="1.5" rx="6"/>
+    <text x="850" y="456.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">Compare healthy</text>
+    <text x="850" y="472.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">never, ex, current</text>
+    <text x="850" y="488.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">smokers in biopsies</text>
+    <text x="850" y="504.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">and BAL (Fig 3)</text>
+    <rect x="750.0" y="552.0"
+          width="200" height="136" 
+          fill="#f48fb1" stroke="#495057" stroke-width="1.5" rx="6"/>
+    <text x="850" y="580.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">Within-COPD</text>
+    <text x="850" y="596.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">comparisons by</text>
+    <text x="850" y="612.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">exacerbations (last</text>
+    <text x="850" y="628.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">year), blood eos</text>
+    <text x="850" y="644.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">≥0.3×10^9/L, and ICS</text>
+    <text x="850" y="660.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">use</text>
+    <rect x="750.0" y="708.0"
+          width="200" height="120" 
+          fill="#f48fb1" stroke="#495057" stroke-width="1.5" rx="6"/>
+    <text x="850" y="736.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">Spearman</text>
+    <text x="850" y="752.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">correlations between</text>
+    <text x="850" y="768.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">inflammatory cells</text>
+    <text x="850" y="784.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">and remodeling</text>
+    <text x="850" y="800.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">indices</text>
+    <rect x="750.0" y="848.0"
+          width="200" height="120" 
+          fill="#f48fb1" stroke="#495057" stroke-width="1.5" rx="6"/>
+    <text x="850" y="876.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">BAL collection from</text>
+    <text x="850" y="892.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">middle lobe; compare</text>
+    <text x="850" y="908.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">differential</text>
+    <text x="850" y="924.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">neutrophils in COPD</text>
+    <text x="850" y="940.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">vs controls</text>
+    <rect x="750.0" y="988.0"
+          width="200" height="120" 
+          fill="#f48fb1" stroke="#495057" stroke-width="1.5" rx="6"/>
+    <text x="850" y="1016.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">COPD smokers:</text>
+    <text x="850" y="1032.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">quantify epithelial</text>
+    <text x="850" y="1048.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">mucus by PAS and</text>
+    <text x="850" y="1064.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">compare current vs</text>
+    <text x="850" y="1080.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">ex</text>
+    <rect x="1100.0" y="100.0"
+          width="200" height="136" 
+          fill="#a5d6a7" stroke="#495057" stroke-width="1.5" rx="6"/>
+    <text x="1200" y="128.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">COPD biopsies show</text>
+    <text x="1200" y="144.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">higher macrophages</text>
+    <text x="1200" y="160.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">and eosinophils, and</text>
+    <text x="1200" y="176.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">greater submucosal</text>
+    <text x="1200" y="192.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">microvascular area</text>
+    <text x="1200" y="208.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">vs controls</text>
+    <rect x="1100.0" y="256.0"
+          width="200" height="120" 
+          fill="#a5d6a7" stroke="#495057" stroke-width="1.5" rx="6"/>
+    <text x="1200" y="284.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">GOLD III/IV have</text>
+    <text x="1200" y="300.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">lower eosinophils</text>
+    <text x="1200" y="316.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">and smaller smooth</text>
+    <text x="1200" y="332.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">muscle area than</text>
+    <text x="1200" y="348.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">GOLD I/II</text>
+    <rect x="1088.0" y="396.0"
+          width="224" height="136" 
+          fill="#a5d6a7" stroke="#495057" stroke-width="1.5" rx="6"/>
+    <text x="1200" y="424.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">Exacerbations in</text>
+    <text x="1200" y="440.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">prior year, blood</text>
+    <text x="1200" y="456.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">eosinophils, and ICS</text>
+    <text x="1200" y="472.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">use did not alter</text>
+    <text x="1200" y="488.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">biopsy</text>
+    <text x="1200" y="504.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">inflammation/remodeling</text>
+    <rect x="1100.0" y="552.0"
+          width="200" height="216" 
+          fill="#a5d6a7" stroke="#495057" stroke-width="1.5" rx="6"/>
+    <text x="1200" y="580.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">Controls:</text>
+    <text x="1200" y="596.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">lymphocytes</text>
+    <text x="1200" y="612.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">correlate with</text>
+    <text x="1200" y="628.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">macrophages and</text>
+    <text x="1200" y="644.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">microvessel area;</text>
+    <text x="1200" y="660.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">COPD: widespread</text>
+    <text x="1200" y="676.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">correlations;</text>
+    <text x="1200" y="692.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">macrophages</text>
+    <text x="1200" y="708.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">correlate with most</text>
+    <text x="1200" y="724.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">markers except</text>
+    <text x="1200" y="740.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">muscle</text>
+    <rect x="1100.0" y="788.0"
+          width="200" height="120" 
+          fill="#a5d6a7" stroke="#495057" stroke-width="1.5" rx="6"/>
+    <text x="1200" y="816.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">Healthy current</text>
+    <text x="1200" y="832.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">smokers have lower</text>
+    <text x="1200" y="848.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">numbers of all</text>
+    <text x="1200" y="864.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">lymphocyte types in</text>
+    <text x="1200" y="880.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">bronchial biopsies</text>
+    <rect x="1100.0" y="928.0"
+          width="200" height="168" 
+          fill="#a5d6a7" stroke="#495057" stroke-width="1.5" rx="6"/>
+    <text x="1200" y="956.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">In healthy controls’</text>
+    <text x="1200" y="972.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">BAL, current smokers</text>
+    <text x="1200" y="988.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">have lower</text>
+    <text x="1200" y="1004.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">lymphocyte</text>
+    <text x="1200" y="1020.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">percentages and</text>
+    <text x="1200" y="1036.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">higher macrophage</text>
+    <text x="1200" y="1052.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">percentages vs</text>
+    <text x="1200" y="1068.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">never/ex</text>
+    <rect x="1100.0" y="1116.0"
+          width="200" height="136" 
+          fill="#a5d6a7" stroke="#495057" stroke-width="1.5" rx="6"/>
+    <text x="1200" y="1144.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">COPD have higher BAL</text>
+    <text x="1200" y="1160.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">neutrophil counts</text>
+    <text x="1200" y="1176.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">than controls; COPD</text>
+    <text x="1200" y="1192.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">characteristics</text>
+    <text x="1200" y="1208.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">showed no BAL</text>
+    <text x="1200" y="1224.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">differences</text>
+    <rect x="1100.0" y="1272.0"
+          width="200" height="120" 
+          fill="#a5d6a7" stroke="#495057" stroke-width="1.5" rx="6"/>
+    <text x="1200" y="1300.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">Among COPD, current</text>
+    <text x="1200" y="1316.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">smokers have ~3×</text>
+    <text x="1200" y="1332.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">more epithelial</text>
+    <text x="1200" y="1348.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">mucus cells than</text>
+    <text x="1200" y="1364.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">ex-smokers</text>
+    <rect x="1446.0" y="100.0"
+          width="208" height="136" 
+          fill="#b0bec5" stroke="#495057" stroke-width="1.5" rx="6"/>
+    <text x="1550" y="128.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">Macrophage/eosinophil</text>
+    <text x="1550" y="144.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">increases and</text>
+    <text x="1550" y="160.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">microvascularity</text>
+    <text x="1550" y="176.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">distinguish COPD</text>
+    <text x="1550" y="192.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">from non-COPD in</text>
+    <text x="1550" y="208.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">bronchial biopsies</text>
+    <rect x="1450.0" y="256.0"
+          width="200" height="152" 
+          fill="#b0bec5" stroke="#495057" stroke-width="1.5" rx="6"/>
+    <text x="1550" y="284.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">Advanced COPD shows</text>
+    <text x="1550" y="300.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">reduced smooth</text>
+    <text x="1550" y="316.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">muscle area and</text>
+    <text x="1550" y="332.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">lower eosinophils,</text>
+    <text x="1550" y="348.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">indicating</text>
+    <text x="1550" y="364.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">stage-related</text>
+    <text x="1550" y="380.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">changes</text>
+    <rect x="1450.0" y="428.0"
+          width="200" height="104" 
+          fill="#b0bec5" stroke="#495057" stroke-width="1.5" rx="6"/>
+    <text x="1550" y="456.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">Smoking suppresses</text>
+    <text x="1550" y="472.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">lymphocyte numbers</text>
+    <text x="1550" y="488.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">in healthy bronchial</text>
+    <text x="1550" y="504.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">tissue and BAL</text>
+    <rect x="1438.0" y="552.0"
+          width="224" height="168" 
+          fill="#b0bec5" stroke="#495057" stroke-width="1.5" rx="6"/>
+    <text x="1550" y="580.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">Recent</text>
+    <text x="1550" y="596.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">exacerbations, blood</text>
+    <text x="1550" y="612.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">eosinophilia, and</text>
+    <text x="1550" y="628.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">ICS use did not</text>
+    <text x="1550" y="644.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">measurably change</text>
+    <text x="1550" y="660.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">biopsy</text>
+    <text x="1550" y="676.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">inflammation/remodeling</text>
+    <text x="1550" y="692.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">in this cohort</text>
+    <rect x="1438.0" y="740.0"
+          width="224" height="136" 
+          fill="#b0bec5" stroke="#495057" stroke-width="1.5" rx="6"/>
+    <text x="1550" y="768.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">Inflammation-remodeling</text>
+    <text x="1550" y="784.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">coupling in COPD is</text>
+    <text x="1550" y="800.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">indicated by</text>
+    <text x="1550" y="816.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">associations between</text>
+    <text x="1550" y="832.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">inflammatory cells</text>
+    <text x="1550" y="848.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">and microvascularity</text>
+    <rect x="1450.0" y="896.0"
+          width="200" height="120" 
+          fill="#b0bec5" stroke="#495057" stroke-width="1.5" rx="6"/>
+    <text x="1550" y="924.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">Active smoking in</text>
+    <text x="1550" y="940.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">COPD is associated</text>
+    <text x="1550" y="956.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">with greater</text>
+    <text x="1550" y="972.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">epithelial mucus</text>
+    <text x="1550" y="988.0" text-anchor="middle" dominant-baseline="middle"
+          font-size="12" font-weight="500" fill="#212529">cell burden</text>
+    <!-- Легенда -->
+    <text x="50" y="1522.0" font-size="14" font-weight="bold" fill="#495057">
+        Легенда зв'язків:
+    </text>
+    <line x1="50" y1="1542.0" x2="90" y2="1542.0"
+          stroke="#66BB6A" stroke-width="2" stroke-dasharray="6,3"
+          marker-end="url(#arrow-fact_to_hypothesis)"/>
+    <text x="100" y="1546.0" font-size="11" fill="#495057">
+        Fact To Hypothesis
+    </text>
+    <line x1="300" y1="1542.0" x2="340" y2="1542.0"
+          stroke="#FF9800" stroke-width="2" 
+          marker-end="url(#arrow-hypothesis_to_method)"/>
+    <text x="350" y="1546.0" font-size="11" fill="#495057">
+        Hypothesis To Method
+    </text>
+    <line x1="550" y1="1542.0" x2="590" y2="1542.0"
+          stroke="#9C27B0" stroke-width="2" 
+          marker-end="url(#arrow-method_to_result)"/>
+    <text x="600" y="1546.0" font-size="11" fill="#495057">
+        Method To Result
+    </text>
+    <line x1="50" y1="1572.0" x2="90" y2="1572.0"
+          stroke="#1E88E5" stroke-width="2" 
+          marker-end="url(#arrow-result_to_conclusion)"/>
+    <text x="100" y="1576.0" font-size="11" fill="#495057">
+        Result To Conclusion
+    </text>
+</svg>

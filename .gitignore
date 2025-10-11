@@ -4,7 +4,7 @@
 
 # Downloaded articles (PDFs and metadata)
 articles/
-*.pdf
+
 
 # Python cache
 __pycache__/
@@ -16,3 +16,6 @@ __pycache__/
 # Logs
 *.log
 /examples/articles.zip
+/examples/open_ai_test.py
+/examples/together_ai_test.py
+/results
