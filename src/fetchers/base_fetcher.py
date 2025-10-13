@@ -10,6 +10,7 @@ class PaperMetadata:
     """Standard paper metadata structure"""
     pmid: Optional[str] = None          # PubMed ID
     pmc_id: Optional[str] = None        # PubMed Central ID
+    arxiv_id: Optional[str] = None      # arXiv ID (e.g., "2106.01167")
     doi: Optional[str] = None           # Digital Object Identifier
     title: str = ""
     authors: List[str] = None

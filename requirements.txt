@@ -2,6 +2,7 @@
 requests>=2.31.0
 python-dotenv>=1.0.0
 pyyaml>=6.0.1
+arxiv>=2.1.0
 
 # Testing
 pytest>=7.4.0

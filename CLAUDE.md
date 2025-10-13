@@ -94,14 +94,20 @@ python scripts/example_adapters.py
 # Test PubMed fetcher
 python scripts/example_fetchers.py
 
+# Test arXiv fetcher
+python scripts/example_arxiv.py
+
 # Download PDFs from PubMed
 python scripts/download_pdfs_demo.py
 
 # Extract PDFs from PMC packages
 python scripts/extract_pdfs_from_packages.py
 
-# Batch download by topic
+# Batch download by topic (PubMed)
 python scripts/batch_download_cross_referenced.py
+
+# Batch download KG papers (arXiv)
+python scripts/batch_download_arxiv_kg.py
 
 # Test PDF parser
 python scripts/example_pdf_parser.py
@@ -220,16 +226,22 @@ embeddings = llm.embed(["text1", "text2"])
 
 ### Paper Fetchers (`src/fetchers/`)
 
-**PubMed E-utilities integration:**
+**Multi-source paper fetching:**
 - `base_fetcher.py` - Abstract fetcher interface
-- `pubmed_fetcher.py` - PubMed API implementation
+- `pubmed_fetcher.py` - PubMed API implementation (E-utilities)
+- `arxiv_fetcher.py` - arXiv API implementation (arxiv.py)
 - `factory.py` - `get_fetcher(type)` factory
 
 **Features:**
 - Search by query: `fetcher.search("aging research", max_results=10)`
-- Fetch metadata: `paper = fetcher.fetch_paper(pmid)`
-- Download PDFs: Full-text PDF download for open-access papers
+- Fetch metadata: `paper = fetcher.fetch_paper(pmid)` or `fetcher.fetch_paper(arxiv_id)`
+- Download PDFs: Full-text PDF download (PubMed PMC, arXiv)
+- Category search: `arxiv_fetcher.search_by_category(["cs.CL", "cs.AI"])`
 - Article registry: Track downloaded papers in `articles/metadata.json`
+
+**Supported Sources:**
+- **PubMed/PMC:** Biomedical literature (NCBI E-utilities API)
+- **arXiv:** Preprints in physics, CS, math, biology, etc.
 
 ### Document Parsers (`src/parsers/`)
 
@@ -263,9 +275,9 @@ python -m src.visualization.generate_svg results/output.json graph.svg
 
 **`article_registry.py`** - Article metadata tracking:
 - SQLite-like JSON registry for downloaded papers
-- Track PMID, PMC ID, DOI, PDF path, download source
+- Track PMID, arXiv ID, PMC ID, DOI, PDF path, download source
 - Statistics: total articles, size, source breakdown
-- Deduplication and lookup by any identifier
+- Deduplication and lookup by any identifier (PMID, arXiv ID, PMC ID, DOI)
 
 ---
 
@@ -319,6 +331,7 @@ Elif entity_type in [hypotheses, conclusions]:
 - **PyMuPDF (fitz)** - PDF text extraction
 - **pdfplumber** - PDF table extraction
 - **requests** - HTTP client for API calls
+- **arxiv** - arXiv API wrapper for paper fetching
 - **python-dotenv** - Environment variable management
 - **pyyaml** - YAML configuration parsing
 

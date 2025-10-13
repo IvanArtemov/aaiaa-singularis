@@ -57,6 +57,38 @@ cache:
   directory: "./data/cache/papers"
   ttl_days: 30  # Cache papers for 30 days
 
+# ==================== arXiv ====================
+arxiv:
+  base_url: "https://export.arxiv.org/api/query"
+
+  # Rate limiting (arXiv recommends 1 request per 3 seconds)
+  rate_limit:
+    requests_per_second: 0.33  # ~1 request per 3 seconds
+    delay_between_requests: 3.0
+
+  # Search defaults
+  search:
+    max_results: 100
+    sort_by: "relevance"  # or "last_updated", "submitted"
+
+  # Common categories for our use case
+  categories:
+    computer_science:
+      - "cs.CL"   # Computation and Language
+      - "cs.AI"   # Artificial Intelligence
+      - "cs.LG"   # Machine Learning
+      - "cs.IR"   # Information Retrieval
+      - "cs.DL"   # Digital Libraries
+      - "cs.DB"   # Databases
+    biology:
+      - "q-bio.QM"  # Quantitative Methods
+      - "q-bio.CB"  # Cell Biology
+      - "q-bio.MN"  # Molecular Networks
+      - "q-bio.GN"  # Genomics
+
+  # Timeout
+  timeout: 30
+
 # ==================== General Settings ====================
 general:
   retry_attempts: 3

@@ -15,6 +15,7 @@ class ArticleRecord:
     """Record of a downloaded article"""
     pmid: Optional[str] = None
     pmc_id: Optional[str] = None
+    arxiv_id: Optional[str] = None
     doi: Optional[str] = None
     title: str = ""
     authors: List[str] = None
@@ -75,11 +76,11 @@ class ArticleRegistry:
         Returns:
             bool: True if added, False if already exists
         """
-        # Use PMID as primary key, fall back to PMC ID or DOI
-        key = record.pmid or record.pmc_id or record.doi
+        # Use PMID as primary key, fall back to arXiv ID, PMC ID or DOI
+        key = record.pmid or record.arxiv_id or record.pmc_id or record.doi
 
         if not key:
-            raise ValueError("Record must have at least one of: pmid, pmc_id, doi")
+            raise ValueError("Record must have at least one of: pmid, arxiv_id, pmc_id, doi")
 
         if key in self._registry:
             return False  # Already exists
@@ -94,10 +95,10 @@ class ArticleRegistry:
 
     def get(self, identifier: str) -> Optional[ArticleRecord]:
         """
-        Get article record by any identifier (PMID, PMC ID, or DOI)
+        Get article record by any identifier (PMID, arXiv ID, PMC ID, or DOI)
 
         Args:
-            identifier: PMID, PMC ID, or DOI
+            identifier: PMID, arXiv ID, PMC ID, or DOI
 
         Returns:
             ArticleRecord if found, None otherwise
@@ -109,6 +110,7 @@ class ArticleRegistry:
         # Search by alternative identifiers
         for key, record_dict in self._registry.items():
             if (record_dict.get('pmid') == identifier or
+                record_dict.get('arxiv_id') == identifier or
                 record_dict.get('pmc_id') == identifier or
                 record_dict.get('doi') == identifier):
                 return ArticleRecord(**record_dict)
@@ -120,7 +122,7 @@ class ArticleRegistry:
         Check if article exists in registry
 
         Args:
-            identifier: PMID, PMC ID, or DOI
+            identifier: PMID, arXiv ID, PMC ID, or DOI
 
         Returns:
             bool: True if exists
@@ -132,7 +134,7 @@ class ArticleRegistry:
         Update article record
 
         Args:
-            identifier: PMID, PMC ID, or DOI
+            identifier: PMID, arXiv ID, PMC ID, or DOI
             **kwargs: Fields to update
         """
         record = self.get(identifier)
@@ -140,7 +142,7 @@ class ArticleRegistry:
             raise ValueError(f"Article {identifier} not found in registry")
 
         # Get the key
-        key = record.pmid or record.pmc_id or record.doi
+        key = record.pmid or record.arxiv_id or record.pmc_id or record.doi
 
         # Update fields
         for field, value in kwargs.items():
@@ -199,6 +201,7 @@ class ArticleRegistry:
             "total_size_mb": round(total_size / (1024 * 1024), 2),
             "by_source": sources,
             "with_pmc_id": sum(1 for r in records if r.pmc_id),
+            "with_arxiv_id": sum(1 for r in records if r.arxiv_id),
             "with_doi": sum(1 for r in records if r.doi),
         }
 
