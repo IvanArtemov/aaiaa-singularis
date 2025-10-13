@@ -42,7 +42,7 @@ MAX_REQUESTS_PER_USER_PER_HOUR=5
 ## Шаг 4: Запуск бота
 
 ```bash
-python examples/run_telegram_bot.py
+python scripts/run_telegram_bot.py
 ```
 
 Вы увидите:

@@ -12,7 +12,7 @@ Requirements:
 - OPENAI_API_KEY in .env
 
 Usage:
-    python examples/run_telegram_bot.py
+    python scripts/run_telegram_bot.py
 """
 
 import sys

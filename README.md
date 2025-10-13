@@ -34,13 +34,13 @@ active_provider: "openai"
 
 ```bash
 # LLM adapters example
-python examples/example_adapters.py
+python scripts/example_adapters.py
 
 # Paper fetcher example
-python examples/example_fetchers.py
+python scripts/example_fetchers.py
 
 # Telegram Bot (requires TELEGRAM_BOT_TOKEN in .env)
-python examples/run_telegram_bot.py
+python scripts/run_telegram_bot.py
 ```
 
 ### 5. Run Tests
@@ -156,7 +156,7 @@ papers = fetcher.search_and_fetch("rapamycin longevity", max_results=5)
 
 **Run example:**
 ```bash
-python examples/example_fetchers.py
+python scripts/example_fetchers.py
 ```
 
 ---
@@ -257,7 +257,7 @@ AAIAA/
    ```
 3. Запустите бота:
    ```bash
-   python examples/run_telegram_bot.py
+   python scripts/run_telegram_bot.py
    ```
 
 ### Функциональность

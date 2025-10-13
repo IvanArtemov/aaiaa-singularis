@@ -16,6 +16,10 @@ OpenAI>=2.3.0
 python-telegram-bot>=20.0  # Telegram Bot API
 aiofiles>=23.0             # Async file operations
 
+# NLP dependencies
+spacy>=3.7.0  # NLP library (run: python -m spacy download en_core_web_sm)
+# Note: scispacy removed due to Python 3.13 compatibility issues
+
 # Future dependencies for full pipeline
 # chromadb>=0.4.0  # Vector database
 # streamlit>=1.28.0  # UI

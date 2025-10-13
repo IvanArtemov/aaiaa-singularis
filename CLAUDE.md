@@ -89,28 +89,28 @@ pytest --cov=src --cov-report=html
 
 ```bash
 # Test LLM adapters (OpenAI/Ollama)
-python examples/example_adapters.py
+python scripts/example_adapters.py
 
 # Test PubMed fetcher
-python examples/example_fetchers.py
+python scripts/example_fetchers.py
 
 # Download PDFs from PubMed
-python examples/download_pdfs_demo.py
+python scripts/download_pdfs_demo.py
 
 # Extract PDFs from PMC packages
-python examples/extract_pdfs_from_packages.py
+python scripts/extract_pdfs_from_packages.py
 
 # Batch download by topic
-python examples/batch_download_cross_referenced.py
+python scripts/batch_download_cross_referenced.py
 
 # Test PDF parser
-python examples/example_pdf_parser.py
+python scripts/example_pdf_parser.py
 
 # Test LLM extraction pipeline
-python examples/example_llm_pipeline.py
+python scripts/example_llm_pipeline.py
 
 # Generate SVG knowledge graph
-python examples/generate_svg.py results/sample_result.json
+python scripts/generate_svg.py results/sample_result.json
 ```
 
 ### Configuration

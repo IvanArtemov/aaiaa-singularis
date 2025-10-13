@@ -5,7 +5,7 @@ This script downloads ~500 articles across 10 interconnected topics in aging res
 Topics are chosen to maximize cross-references for knowledge graph construction.
 
 Usage:
-    python examples/batch_download_cross_referenced.py
+    python scripts/batch_download_cross_referenced.py
 """
 
 import sys

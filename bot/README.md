@@ -59,7 +59,7 @@ LLM_MODEL=gpt-4o-mini                   # Модель LLM
 ## 🏃 Запуск
 
 ```bash
-python examples/run_telegram_bot.py
+python scripts/run_telegram_bot.py
 ```
 
 Вы увидите:
@@ -258,7 +258,7 @@ Cleanup temp files
 ```bash
 # Запуск в screen/tmux
 screen -S telegram_bot
-python examples/run_telegram_bot.py
+python scripts/run_telegram_bot.py
 # Ctrl+A, D для detach
 ```
 
@@ -274,7 +274,7 @@ Type=simple
 User=your_user
 WorkingDirectory=/path/to/AAIAA
 Environment="PATH=/path/to/venv/bin"
-ExecStart=/path/to/venv/bin/python examples/run_telegram_bot.py
+ExecStart=/path/to/venv/bin/python scripts/run_telegram_bot.py
 Restart=always
 
 [Install]
@@ -329,7 +329,7 @@ CMD ["python", "examples/run_telegram_bot.py"]
 pytest tests/bot/
 
 # Manual testing
-python examples/run_telegram_bot.py
+python scripts/run_telegram_bot.py
 ```
 
 ### Добавление новых функций

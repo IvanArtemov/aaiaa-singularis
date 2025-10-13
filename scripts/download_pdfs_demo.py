@@ -8,7 +8,7 @@ This script demonstrates how to:
 4. Avoid re-downloading
 
 Usage:
-    python examples/download_pdfs_demo.py
+    python scripts/download_pdfs_demo.py
 """
 
 import sys

@@ -15,7 +15,7 @@ __pycache__/
 
 # Logs
 *.log
-/examples/articles.zip
-/examples/open_ai_test.py
-/examples/together_ai_test.py
+/scripts/articles.zip
+/scripts/open_ai_test.py
+/scripts/together_ai_test.py
 /results

@@ -5,7 +5,7 @@ This script demonstrates how to search PubMed for articles with free full text
 using the PubMedFetcher class with the free_full_text filter.
 
 Usage:
-    python examples/pubmed_free_full_text_demo.py
+    python scripts/pubmed_free_full_text_demo.py
 
 Modify the SEARCH_QUERY variable to change the search term.
 """
@@ -145,7 +145,7 @@ def main():
     print(f"With PMC ID: {with_pmc} ({with_pmc/total*100:.1f}%)")
     print(f"With DOI: {with_doi} ({with_doi/total*100:.1f}%)")
 
-    # Additional examples
+    # Additional scripts
     print_separator("Additional Search Examples")
 
     print("You can modify the search query to explore different topics:")

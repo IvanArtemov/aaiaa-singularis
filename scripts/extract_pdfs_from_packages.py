@@ -5,7 +5,7 @@ This script extracts PDF files from downloaded tar.gz packages from PMC OA Servi
 and updates the article registry with new PDF paths.
 
 Usage:
-    python examples/extract_pdfs_from_packages.py
+    python scripts/extract_pdfs_from_packages.py
 """
 
 import sys
