@@ -15,11 +15,23 @@ class ParsedDocument:
     word_count: int                    # Total word count
     page_count: Optional[int] = None   # Number of pages (if applicable)
     parse_time: Optional[float] = None # Parsing time in seconds
+    imrad_sections: Optional[Dict[str, str]] = None  # IMRAD structured sections
+    sentences: Optional[list] = None   # Parsed sentences for pattern matching
 
     def get_section(self, section_name: str) -> Optional[str]:
         """Get section text by name (case-insensitive)"""
         section_name_lower = section_name.lower()
         for key, value in self.sections.items():
+            if key.lower() == section_name_lower:
+                return value
+        return None
+
+    def get_imrad_section(self, section_name: str) -> Optional[str]:
+        """Get IMRAD section text by name (case-insensitive)"""
+        if not self.imrad_sections:
+            return None
+        section_name_lower = section_name.lower()
+        for key, value in self.imrad_sections.items():
             if key.lower() == section_name_lower:
                 return value
         return None

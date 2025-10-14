@@ -34,7 +34,7 @@ class BotConfig:
         "temperature": 0.1,
         "max_tokens": 4000
     }
-    LLM_MODEL = os.getenv("LLM_MODEL", "gpt-4o-mini")
+    LLM_MODEL = os.getenv("LLM_MODEL", "gpt-5-mini")
 
     # Cleanup
     CLEANUP_TEMP_FILES_OLDER_THAN_HOURS = 1

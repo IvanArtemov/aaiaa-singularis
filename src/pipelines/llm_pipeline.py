@@ -1,4 +1,4 @@
-"""LLM-based extraction pipeline using GPT-4o-mini"""
+"""LLM-based extraction pipeline using gpt-5-mini"""
 
 import json
 import time
@@ -20,10 +20,10 @@ class LLMPipeline(BasePipeline):
     """
     LLM-based extraction pipeline
 
-    Uses GPT-4o-mini (or configurable LLM) to extract entities and relationships
+    Uses gpt-5-mini (or configurable LLM) to extract entities and relationships
     from scientific papers. Designed for high-quality ground truth generation.
 
-    Estimated cost: ~$0.30 per paper with GPT-4, ~$0.03 with GPT-4o-mini
+    Estimated cost: ~$0.30 per paper with GPT-4, ~$0.03 with gpt-5-mini
     """
 
     # Extraction prompt template
@@ -92,7 +92,7 @@ Extract ALL relevant entities and relationships. Be thorough but precise."""
         Args:
             config: Configuration dictionary
             api_key: OpenAI API key (if not in config)
-            model: Model to use (default: gpt-4o-mini)
+            model: Model to use (default: gpt-5-mini)
         """
         super().__init__(config)
 
@@ -124,7 +124,7 @@ Extract ALL relevant entities and relationships. Be thorough but precise."""
         # Validate input
         self._validate_paper_text(paper_text)
 
-        # Truncate if too long (GPT-4o-mini context limit)
+        # Truncate if too long (gpt-5-mini context limit)
         max_chars = 100000  # ~25k tokens
         if len(paper_text) > max_chars:
             paper_text = paper_text[:max_chars] + "\n\n[Text truncated due to length]"
@@ -329,7 +329,7 @@ Extract ALL relevant entities and relationships. Be thorough but precise."""
         """Get estimated cost per paper"""
         if "gpt-4" in self.model and "mini" not in self.model:
             return 0.30  # GPT-4 full model
-        elif "gpt-4o-mini" in self.model:
-            return 0.03  # GPT-4o-mini
+        elif "gpt-5-mini" in self.model:
+            return 0.03  # gpt-5-mini
         else:
             return 0.05  # Other models

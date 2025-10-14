@@ -202,9 +202,9 @@ Input → Parser → Pipeline → Extractor → Model → Validator → Output
 - Standardized interface for metrics collection
 
 **`llm_pipeline.py`** - LLM-based extraction:
-- Uses GPT-4o-mini (or configurable model) via OpenAI SDK
+- Uses gpt-5-mini (or configurable model) via OpenAI SDK
 - Structured JSON output with few-shot prompting
-- Cost: ~$0.03/paper (GPT-4o-mini) or ~$0.30/paper (GPT-4)
+- Cost: ~$0.03/paper (gpt-5-mini) or ~$0.30/paper (GPT-4)
 - Use case: Ground truth generation, high-quality baseline
 
 ### LLM Adapters (`src/llm_adapters/`)
@@ -286,7 +286,7 @@ python -m src.visualization.generate_svg results/output.json graph.svg
 ### Three-Pipeline Approach
 
 **1. LLM Pipeline (Ground Truth)**
-- Model: GPT-4 or GPT-4o-mini
+- Model: GPT-4 or gpt-5-mini
 - Cost: $0.03-$0.30 per paper
 - Precision: ~95% (expected)
 - Use: Create 10-15 annotated papers as ground truth
@@ -318,7 +318,7 @@ Elif entity_type in [hypotheses, conclusions]:
 ### Optimization Techniques
 1. **Batch processing** - Combine multiple sections into single API call
 2. **Caching** - LRU cache for identical text segments
-3. **Model selection** - GPT-4o-mini instead of GPT-4 (20x cheaper)
+3. **Model selection** - gpt-5-mini instead of GPT-4 (20x cheaper)
 4. **Chunking** - Process only relevant sections, not full papers
 
 ---
@@ -327,7 +327,7 @@ Elif entity_type in [hypotheses, conclusions]:
 
 ### Core (Existing)
 - **Python 3.10+**
-- **OpenAI SDK** - GPT-4o-mini for LLM extraction
+- **OpenAI SDK** - gpt-5-mini for LLM extraction
 - **PyMuPDF (fitz)** - PDF text extraction
 - **pdfplumber** - PDF table extraction
 - **requests** - HTTP client for API calls

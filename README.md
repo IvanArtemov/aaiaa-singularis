@@ -114,7 +114,7 @@ for chunk in llm.stream_generate("Tell me about aging"):
 ## 🛠️ Supported Providers
 
 ### OpenAI (ChatGPT)
-- **Model:** gpt-4o-mini
+- **Model:** gpt-5-mini
 - **Embeddings:** text-embedding-3-small
 - **Cost:** ~$0.15 input, ~$0.60 output per 1M tokens
 

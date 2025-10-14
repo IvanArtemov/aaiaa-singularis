@@ -18,6 +18,12 @@ try:
 except ImportError:
     PDFPLUMBER_AVAILABLE = False
 
+try:
+    from nltk.stem import WordNetLemmatizer
+    NLTK_AVAILABLE = True
+except ImportError:
+    NLTK_AVAILABLE = False
+
 
 class PDFParser(BaseParser):
     """
@@ -39,18 +45,26 @@ class PDFParser(BaseParser):
         "acknowledgments": r"^\s*(?:acknowledgments?|acknowledgements?)\s*$",
     }
 
-    def __init__(self, extract_tables: bool = False):
+    def __init__(self, extract_tables: bool = False, enable_imrad: bool = True):
         """
         Initialize PDF parser
 
         Args:
             extract_tables: Whether to extract tables using pdfplumber (slower)
+            enable_imrad: Whether to enable IMRAD section detection (recommended)
         """
         super().__init__()
         self.extract_tables = extract_tables
+        self.enable_imrad = enable_imrad
 
         if not PYMUPDF_AVAILABLE:
             raise ImportError("PyMuPDF (fitz) is required. Install with: pip install PyMuPDF")
+
+        # Initialize lemmatizer for IMRAD normalization
+        if NLTK_AVAILABLE and enable_imrad:
+            self.lemmatizer = WordNetLemmatizer()
+        else:
+            self.lemmatizer = None
 
     def parse(self, file_path: str) -> ParsedDocument:
         """Parse PDF from file path"""
@@ -78,6 +92,11 @@ class PDFParser(BaseParser):
         # Detect sections
         sections = self._detect_sections(text)
 
+        # IMRAD sections (enhanced for hybrid pipeline)
+        imrad_sections = None
+        if self.enable_imrad:
+            imrad_sections = self._split_into_imrad_sections(text)
+
         # Word count
         word_count = self._count_words(text)
 
@@ -89,7 +108,9 @@ class PDFParser(BaseParser):
             metadata=metadata,
             word_count=word_count,
             page_count=page_count,
-            parse_time=parse_time
+            parse_time=parse_time,
+            imrad_sections=imrad_sections,
+            sentences=None  # Will be populated by pattern extractors
         )
 
     def parse_from_bytes(self, file_bytes: bytes, filename: str = "") -> ParsedDocument:
@@ -113,6 +134,11 @@ class PDFParser(BaseParser):
         # Detect sections
         sections = self._detect_sections(text)
 
+        # IMRAD sections (enhanced for hybrid pipeline)
+        imrad_sections = None
+        if self.enable_imrad:
+            imrad_sections = self._split_into_imrad_sections(text)
+
         # Word count
         word_count = self._count_words(text)
 
@@ -124,7 +150,9 @@ class PDFParser(BaseParser):
             metadata=metadata,
             word_count=word_count,
             page_count=page_count,
-            parse_time=parse_time
+            parse_time=parse_time,
+            imrad_sections=imrad_sections,
+            sentences=None  # Will be populated by pattern extractors
         )
 
     def supports_format(self, file_extension: str) -> bool:
@@ -320,3 +348,148 @@ class PDFParser(BaseParser):
                     tables.extend(page_tables)
 
         return tables
+
+    def _clean_text_remove_figures_tables(self, text: str) -> str:
+        """
+        Remove figures and tables from text (from division_into_semantic_blocks.py)
+
+        Args:
+            text: Raw text
+
+        Returns:
+            Cleaned text
+        """
+        # Remove non-breaking spaces and zero-width characters
+        text = text.replace('\u00a0', ' ')
+        text = re.sub(r'[\u200b\ufeff]', '', text)
+        text = re.sub(r'\r\n?', '\n', text)
+
+        # Remove figure captions
+        text = re.sub(r'(?im)^\s*(figure|fig\.?)\s*\d+[^.\n]*[\.\n]?', '', text)
+
+        # Remove table captions
+        text = re.sub(r'(?im)^\s*(table|tab\.?)\s*\d+[^.\n]*[\.\n]?', '', text)
+
+        # Filter tabular lines
+        def is_tabular_line(line):
+            stripped = line.strip()
+            if not stripped:
+                return False
+            num_ratio = sum(c.isdigit() for c in stripped) / len(stripped)
+            return (
+                num_ratio > 0.4
+                or '\t' in stripped
+                or stripped.count('  ') > 3
+                or re.search(r'\|', stripped)
+            )
+
+        lines = []
+        for line in text.splitlines():
+            if not is_tabular_line(line):
+                lines.append(line)
+            elif lines and lines[-1] != '':
+                lines.append('')
+
+        text = '\n'.join(lines)
+        text = re.sub(r'\n{3,}', '\n\n', text)
+        return text.strip()
+
+    def _normalize_section_name(self, name: str) -> str:
+        """
+        Normalize section name for IMRAD mapping (from division_into_semantic_blocks.py)
+
+        Args:
+            name: Raw section name
+
+        Returns:
+            Normalized section name
+        """
+        name = name.strip().lower()
+        name = re.sub(r'[:.\-–—]+$', '', name)
+        name = re.sub(r'\s+', ' ', name)
+
+        # Lemmatize if available
+        if self.lemmatizer:
+            words = [self.lemmatizer.lemmatize(w) for w in name.split()]
+            name = " ".join(words)
+
+        # Normalization map
+        normalization_map = {
+            "introduction": "introduction",
+            "background": "introduction",
+            "method": "methods",
+            "methods": "methods",
+            "material and method": "methods",
+            "materials and method": "methods",
+            "materials and methods": "methods",
+            "result": "results",
+            "results": "results",
+            "result and discussion": "results",
+            "results and discussion": "results",
+            "discussion": "discussion",
+            "general discussion": "discussion",
+            "conclusion": "conclusion",
+            "conclusions": "conclusion",
+            "summary": "conclusion",
+            "abstract": "abstract",
+            "acknowledgment": "acknowledgments",
+            "acknowledgments": "acknowledgments",
+            "reference": "references",
+            "references": "references",
+        }
+
+        return normalization_map.get(name, name)
+
+    def _split_into_imrad_sections(self, text: str) -> Dict[str, str]:
+        """
+        Split text into IMRAD sections (from division_into_semantic_blocks.py)
+
+        Args:
+            text: Full paper text
+
+        Returns:
+            Dictionary mapping section names to content
+        """
+        # Clean text first
+        text = self._clean_text_remove_figures_tables(text)
+
+        # Remove excessive newlines
+        text = re.sub(r'\n{2,}', '\n\n', text)
+
+        # Section headers
+        headers = [
+            r'abstract',
+            r'introduction|background',
+            r'materials\s+and\s+methods|methods?',
+            r'results?',
+            r'discussion',
+            r'conclusion[s]?',
+            r'references',
+            r'acknowledg(?:ement|ements|e)?'
+        ]
+        headers_union = '|'.join(headers)
+
+        pattern = rf'(?:^|\n)\s*(?:\d+\.?|[IVXLCM]+\.)?\s*(?P<header>{headers_union})\b[:.]?\s*'
+        matches = list(re.finditer(pattern, text, flags=re.IGNORECASE))
+
+        if not matches:
+            # No headers found, return full text
+            return {"full_text": text.strip()}
+
+        sections = {}
+        for i, m in enumerate(matches):
+            header_raw = m.group('header')
+            normalized_header = self._normalize_section_name(header_raw)
+
+            start = m.end()
+            end = matches[i + 1].start() if i + 1 < len(matches) else len(text)
+            section_text = text[start:end].lstrip()
+            section_text = re.sub(r'\n{3,}', '\n\n', section_text)
+
+            # Merge sections with same normalized name
+            if normalized_header in sections:
+                sections[normalized_header] += "\n\n" + section_text
+            else:
+                sections[normalized_header] = section_text
+
+        return sections

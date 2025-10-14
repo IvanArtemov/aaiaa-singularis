@@ -1,0 +1,106 @@
+# Pipeline Configuration for Hybrid Extraction
+
+# Hybrid Pipeline Settings
+hybrid_pipeline:
+  # Enable LLM fallback for low-confidence cases
+  use_llm_fallback: true
+
+  # Confidence threshold for triggering LLM fallback
+  # If pattern/NLP extraction confidence < this, use LLM
+  confidence_threshold: 0.75
+
+  # LLM settings for selective extraction
+  llm_provider: "openai"  # or "ollama"
+  llm_model: "gpt-5-mini"  # Cost-optimized model
+
+  # Pattern extractor confidence thresholds
+  pattern_confidence_threshold: 0.7
+
+  # NLP extractor confidence threshold
+  nlp_confidence_threshold: 0.6
+
+  # Cost limits (optional)
+  max_cost_per_paper: 0.05  # USD
+  warn_cost_threshold: 0.03  # USD
+
+# LLM Pipeline Settings (for comparison/ground truth)
+llm_pipeline:
+  provider: "openai"
+  model: "gpt-5-mini"
+  temperature: 0.1
+  max_tokens: 4000
+
+# PDF Parser Settings
+pdf_parser:
+  # Enable IMRAD section detection (recommended for hybrid pipeline)
+  enable_imrad: true
+
+  # Extract tables (slower, usually not needed)
+  extract_tables: false
+
+# Extraction Strategy by Section
+extraction_strategy:
+  introduction:
+    - pattern_extractor: "HypothesisExtractor"
+    - nlp_extractor: "NLPFactExtractor"
+    - llm_fallback: "SelectiveLLMExtractor"  # Only if low confidence
+
+  methods:
+    - pattern_extractor: "MethodExtractor"
+    - pattern_extractor: "DatasetExtractor"
+    - pattern_extractor: "ExperimentExtractor"
+    # No LLM fallback for methods (good pattern coverage)
+
+  results:
+    - pattern_extractor: "ResultExtractor"
+    # No LLM fallback for results (statistical patterns work well)
+
+  discussion:
+    - llm_extractor: "SelectiveLLMExtractor"  # Analysis extraction
+
+  conclusion:
+    - llm_extractor: "SelectiveLLMExtractor"  # Conclusion extraction
+
+# Relationship Building Rules
+relationship_rules:
+  # Automatic relationship inference
+  fact_to_hypothesis:
+    enabled: true
+    same_section_only: true
+    confidence: 0.8
+
+  hypothesis_to_experiment:
+    enabled: true
+    confidence: 0.75
+
+  experiment_uses_technique:
+    enabled: true
+    same_section_only: true
+    confidence: 0.7
+
+  experiment_uses_dataset:
+    enabled: true
+    confidence: 0.7
+
+  method_to_result:
+    enabled: true
+    confidence: 0.65
+
+  result_to_conclusion:
+    enabled: true
+    confidence: 0.75
+
+# Performance Targets
+performance_targets:
+  cost_per_paper: 0.02  # Target: $0.02
+  precision: 0.85       # Target: ≥ 85%
+  recall: 0.80          # Target: ≥ 80%
+  f1_score: 0.82        # Target: ≥ 82%
+  throughput: 150       # Target: > 150 papers/hour
+
+# Logging and Monitoring
+logging:
+  level: "INFO"
+  log_extraction_methods: true  # Track which method extracted each entity
+  log_costs: true              # Track per-paper costs
+  log_confidence_scores: true  # Track confidence distributions

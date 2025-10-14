@@ -333,7 +333,7 @@ SECTION_HEADERS = {
          │
     ┌────▼─────┐
     │   LLM    │ ──► Complex reasoning (Hypotheses, Conclusions) [SELECTIVE]
-    │(selective)│     GPT-4o-mini: Only 20% of content
+    │(selective)│     gpt-5-mini: Only 20% of content
     └────┬─────┘     ~$0.01/paper
          │
     ┌────▼─────┐
@@ -364,7 +364,7 @@ def extract_entity(self, text: str, entity_type: str):
 **Оптимизация LLM вызовов:**
 - Batch processing (5-10 запросов → 1 API call)
 - Кэширование похожих запросов
-- Использование GPT-4o-mini вместо GPT-4
+- Использование gpt-5-mini вместо GPT-4
 
 ---
 
@@ -848,7 +848,7 @@ if uploaded_file:
 
 ### Core (Existing)
 - Python 3.10+
-- OpenAI API (GPT-4, GPT-4o-mini)
+- OpenAI API (GPT-4, gpt-5-mini)
 - Ollama (опционально, для локальных экспериментов)
 
 ### New Dependencies

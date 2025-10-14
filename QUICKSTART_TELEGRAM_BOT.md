@@ -96,7 +96,7 @@ MAX_REQUESTS_PER_USER_PER_HOUR=5
 PROCESSING_TIMEOUT_SECONDS=180
 
 # Модель LLM для извлечения
-LLM_MODEL=gpt-4o-mini
+LLM_MODEL=gpt-5-mini
 ```
 
 ## 🐛 Troubleshooting
