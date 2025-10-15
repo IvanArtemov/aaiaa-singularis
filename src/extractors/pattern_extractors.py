@@ -27,6 +27,8 @@ class BasePatternExtractor(ABC):
         self.confidence_threshold = confidence_threshold
         self.patterns = self._get_patterns()
         self.compiled_patterns = [re.compile(p, re.IGNORECASE) for p in self.patterns]
+        self.dynamic_keywords = []  # LLM-generated keywords
+        self.dynamic_patterns = []  # Compiled patterns from keywords
 
     @abstractmethod
     def _get_patterns(self) -> List[str]:
@@ -37,6 +39,33 @@ class BasePatternExtractor(ABC):
     def _get_entity_type(self) -> EntityType:
         """Get entity type for this extractor"""
         pass
+
+    def set_dynamic_keywords(self, keywords: List[str]):
+        """
+        Set dynamic keywords from LLM for context-specific extraction
+
+        Args:
+            keywords: List of keywords/phrases to use for extraction
+        """
+        self.dynamic_keywords = keywords
+
+        # Generate regex patterns from keywords
+        self.dynamic_patterns = []
+        for keyword in keywords:
+            # Escape special regex characters
+            escaped = re.escape(keyword)
+            # Create flexible pattern that allows word boundaries
+            pattern = rf"\b{escaped}\b"
+            try:
+                compiled = re.compile(pattern, re.IGNORECASE)
+                self.dynamic_patterns.append(compiled)
+            except re.error:
+                # Skip invalid patterns
+                pass
+
+    def get_all_patterns(self):
+        """Get combined list of static and dynamic patterns"""
+        return self.compiled_patterns + self.dynamic_patterns
 
     def extract(
         self,
@@ -63,7 +92,9 @@ class BasePatternExtractor(ABC):
         else:
             sentences = self._split_simple(text)
 
-        # Match patterns
+        # Match patterns (combine static + dynamic)
+        all_patterns = self.get_all_patterns()
+
         for sent_text in sentences:
             sent_text = sent_text.strip().replace("\n", " ")
             if not sent_text:
@@ -71,9 +102,13 @@ class BasePatternExtractor(ABC):
 
             # Check if any pattern matches
             matched = False
-            for pattern in self.compiled_patterns:
+            matched_by_dynamic = False
+            for pattern in all_patterns:
                 if pattern.search(sent_text):
                     matched = True
+                    # Check if this was a dynamic pattern
+                    if pattern in self.dynamic_patterns:
+                        matched_by_dynamic = True
                     break
 
             if matched:
@@ -87,7 +122,10 @@ class BasePatternExtractor(ABC):
                         text=sent_text,
                         confidence=confidence,
                         source_section=section_name,
-                        metadata={"extraction_method": "pattern_matching"}
+                        metadata={
+                            "extraction_method": "pattern_matching",
+                            "used_dynamic_keywords": matched_by_dynamic
+                        }
                     )
                     entities.append(entity)
 
@@ -122,8 +160,9 @@ class BasePatternExtractor(ABC):
         # Base confidence
         confidence = 0.7
 
-        # Boost confidence based on multiple pattern matches
-        match_count = sum(1 for p in self.compiled_patterns if p.search(text))
+        # Boost confidence based on multiple pattern matches (static + dynamic)
+        all_patterns = self.get_all_patterns()
+        match_count = sum(1 for p in all_patterns if p.search(text))
         if match_count > 1:
             confidence = min(0.95, confidence + 0.1 * (match_count - 1))
 

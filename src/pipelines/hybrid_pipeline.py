@@ -21,7 +21,8 @@ from src.extractors import (
     ExperimentExtractor,
     ResultExtractor,
     NLPFactExtractor,
-    SelectiveLLMExtractor
+    SelectiveLLMExtractor,
+    EntityKeywordGenerator
 )
 
 
@@ -30,10 +31,11 @@ class HybridPipeline(BasePipeline):
     Hybrid extraction pipeline for cost-optimized extraction
 
     Strategy:
+    0. Generate context-specific keywords via LLM (~$0.001-0.002/paper)
     1. Parse PDF with IMRAD sections
-    2. Apply pattern extractors to relevant sections (FREE)
+    2. Apply pattern extractors with dynamic keywords to relevant sections (FREE)
     3. Apply NLP extractor for facts (~$0.001/paper)
-    4. Use selective LLM only for low-confidence cases (~$0.01-0.02/paper)
+    4. Use selective LLM only for low-confidence cases (DISABLED - kept for future)
 
     Target cost: < $0.02/paper
     Target precision: ≥ 85%
@@ -91,6 +93,12 @@ class HybridPipeline(BasePipeline):
         # Selective LLM extractor (lazy initialization)
         self.llm_extractor = None
 
+        # Keyword generator for context-specific extraction
+        self.keyword_generator = EntityKeywordGenerator(
+            llm_provider=llm_provider,
+            llm_model=llm_model
+        )
+
     def extract(
         self,
         parsed_doc: ParsedDocument,
@@ -117,6 +125,36 @@ class HybridPipeline(BasePipeline):
         extraction_methods = defaultdict(int)
 
         all_entities = []
+
+        # ========== PHASE 0: Keyword Generation (~$0.001-0.002) ==========
+
+        # Generate context-specific keywords for each entity type
+        print("Generating context-specific keywords...")
+        keywords_by_type = self.keyword_generator.generate_all_keywords(parsed_doc)
+
+        # Set dynamic keywords for each extractor
+        if EntityType.HYPOTHESIS in keywords_by_type:
+            self.hypothesis_extractor.set_dynamic_keywords(keywords_by_type[EntityType.HYPOTHESIS])
+
+        if EntityType.TECHNIQUE in keywords_by_type:
+            self.method_extractor.set_dynamic_keywords(keywords_by_type[EntityType.TECHNIQUE])
+
+        if EntityType.DATASET in keywords_by_type:
+            self.dataset_extractor.set_dynamic_keywords(keywords_by_type[EntityType.DATASET])
+
+        if EntityType.EXPERIMENT in keywords_by_type:
+            self.experiment_extractor.set_dynamic_keywords(keywords_by_type[EntityType.EXPERIMENT])
+
+        if EntityType.RESULT in keywords_by_type:
+            self.result_extractor.set_dynamic_keywords(keywords_by_type[EntityType.RESULT])
+
+        # Track keyword generation metrics
+        kg_metrics = self.keyword_generator.get_metrics()
+        total_tokens += kg_metrics["total_tokens"]
+        total_cost += kg_metrics["total_cost_usd"]
+
+        print(f"Keywords generated: {len(keywords_by_type)} entity types, "
+              f"{kg_metrics['total_tokens']} tokens, ${kg_metrics['total_cost_usd']:.6f}")
 
         # ========== PHASE 1: Pattern Extraction (FREE) ==========
 
@@ -201,7 +239,13 @@ class HybridPipeline(BasePipeline):
             metadata={
                 "pipeline": "hybrid",
                 "extraction_methods": dict(extraction_methods),
-                "sections_processed": list(parsed_doc.imrad_sections.keys()) if parsed_doc.imrad_sections else []
+                "sections_processed": list(parsed_doc.imrad_sections.keys()) if parsed_doc.imrad_sections else [],
+                "keyword_generation": {
+                    "tokens_used": kg_metrics["total_tokens"],
+                    "cost_usd": kg_metrics["total_cost_usd"],
+                    "entity_types_covered": len(keywords_by_type),
+                    "cache_hit_rate": kg_metrics["cache_hit_rate"]
+                }
             }
         )
 
@@ -308,7 +352,7 @@ class HybridPipeline(BasePipeline):
     def get_description(self) -> str:
         """Get pipeline description"""
         return (
-            f"Hybrid Pipeline (Pattern + NLP + Selective LLM). "
-            f"Cost-optimized approach. "
+            f"Hybrid Pipeline (LLM Keywords + Pattern + NLP). "
+            f"Cost-optimized approach with context-specific keyword generation. "
         )
 
