@@ -16,17 +16,9 @@ class ParsedDocument:
     page_count: Optional[int] = None   # Number of pages (if applicable)
     parse_time: Optional[float] = None # Parsing time in seconds
     imrad_sections: Optional[Dict[str, str]] = None  # IMRAD structured sections
-    sentences: Optional[list] = None   # Parsed sentences for pattern matching
+    _spacy_doc: Optional[Any] = None   # Private: spaCy Doc object with full linguistic annotations
 
     def get_section(self, section_name: str) -> Optional[str]:
-        """Get section text by name (case-insensitive)"""
-        section_name_lower = section_name.lower()
-        for key, value in self.sections.items():
-            if key.lower() == section_name_lower:
-                return value
-        return None
-
-    def get_imrad_section(self, section_name: str) -> Optional[str]:
         """Get IMRAD section text by name (case-insensitive)"""
         if not self.imrad_sections:
             return None
@@ -35,6 +27,17 @@ class ParsedDocument:
             if key.lower() == section_name_lower:
                 return value
         return None
+
+    def get_sentences(self) -> list:
+        """
+        Get list of sentences as strings
+
+        Returns:
+            List of sentence strings
+        """
+        if self._spacy_doc:
+            return [sent.text.strip() for sent in self._spacy_doc.sents]
+        return []
 
 
 class BaseParser(ABC):
@@ -57,20 +60,6 @@ class BaseParser(ABC):
         Raises:
             FileNotFoundError: If file doesn't exist
             ValueError: If file format is not supported
-        """
-        pass
-
-    @abstractmethod
-    def parse_from_bytes(self, file_bytes: bytes, filename: str = "") -> ParsedDocument:
-        """
-        Parse document from bytes (for file uploads)
-
-        Args:
-            file_bytes: Document content as bytes
-            filename: Original filename (optional, for format detection)
-
-        Returns:
-            ParsedDocument with extracted text, sections, and metadata
         """
         pass
 

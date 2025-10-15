@@ -9,6 +9,7 @@ from .pattern_extractors import (
 )
 from .nlp_extractor import NLPFactExtractor
 from .selective_llm_extractor import SelectiveLLMExtractor
+from .llm_guided_regex import LLMGuidedTokenExtractor
 
 __all__ = [
     "HypothesisExtractor",
@@ -17,5 +18,6 @@ __all__ = [
     "ExperimentExtractor",
     "ResultExtractor",
     "NLPFactExtractor",
-    "SelectiveLLMExtractor"
+    "SelectiveLLMExtractor",
+    "LLMGuidedTokenExtractor"
 ]

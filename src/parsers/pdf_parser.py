@@ -24,6 +24,12 @@ try:
 except ImportError:
     NLTK_AVAILABLE = False
 
+try:
+    import spacy
+    SPACY_AVAILABLE = True
+except ImportError:
+    SPACY_AVAILABLE = False
+
 
 class PDFParser(BaseParser):
     """
@@ -32,18 +38,6 @@ class PDFParser(BaseParser):
     Uses PyMuPDF (fitz) as primary parser for speed and reliability.
     Falls back to pdfplumber for table extraction if needed.
     """
-
-    # Common section headers in scientific papers
-    SECTION_PATTERNS = {
-        "abstract": r"^\s*abstract\s*$",
-        "introduction": r"^\s*(?:introduction|background)\s*$",
-        "methods": r"^\s*(?:methods?|materials?\s+and\s+methods?|methodology|experimental\s+(?:procedures?|methods?))\s*$",
-        "results": r"^\s*results?\s*$",
-        "discussion": r"^\s*discussion\s*$",
-        "conclusion": r"^\s*(?:conclusion|conclusions?|concluding\s+remarks?)\s*$",
-        "references": r"^\s*(?:references?|bibliography|works?\s+cited)\s*$",
-        "acknowledgments": r"^\s*(?:acknowledgments?|acknowledgements?)\s*$",
-    }
 
     def __init__(self, extract_tables: bool = False, enable_imrad: bool = True):
         """
@@ -57,14 +51,220 @@ class PDFParser(BaseParser):
         self.extract_tables = extract_tables
         self.enable_imrad = enable_imrad
 
+        # Initialize lemmatizer for section name normalization
+        self.lemmatizer = None
+        if NLTK_AVAILABLE:
+            try:
+                self.lemmatizer = WordNetLemmatizer()
+            except:
+                pass
+
+        # Initialize spaCy for sentence splitting
+        self.nlp = None
+        if SPACY_AVAILABLE:
+            try:
+                self.nlp = spacy.load("en_core_web_sm")
+            except:
+                print("Warning: spaCy model 'en_core_web_sm' not found. Install with: python -m spacy download en_core_web_sm")
+
         if not PYMUPDF_AVAILABLE:
             raise ImportError("PyMuPDF (fitz) is required. Install with: pip install PyMuPDF")
 
-        # Initialize lemmatizer for IMRAD normalization
-        if NLTK_AVAILABLE and enable_imrad:
-            self.lemmatizer = WordNetLemmatizer()
-        else:
-            self.lemmatizer = None
+    # ========== IMRAD SECTION KEYWORDS ==========
+
+    ABSTRACT_KEYWORDS = [
+        "abstract",
+        "summary",
+        "synopsis",
+        "précis",
+        "overview",
+        "graphical abstract",
+        "structured abstract",
+        # Multilingual
+        "résumé",  # French
+        "zusammenfassung",  # German
+        "resumen",  # Spanish
+    ]
+
+    INTRODUCTION_KEYWORDS = [
+        "introduction",
+        "background",
+        "preamble",
+        "prologue",
+        "rationale",
+        "motivation",
+        "study background",
+        "introduction and background",
+        "background and significance",
+        # Specific domains
+        "clinical background",
+        "theoretical background",
+    ]
+
+    METHODS_KEYWORDS = [
+        # Core terms
+        "methods",
+        "methodology",
+        "materials and methods",
+        "methods and materials",
+        "experimental methods",
+        "experimental procedures",
+        # Variations
+        "materials",
+        "procedures",
+        "protocol",
+        "protocols",
+        "approach",
+        "techniques",
+        # Specific types
+        "study design",
+        "experimental design",
+        "research design",
+        "study protocol",
+        "experimental protocol",
+        # Clinical
+        "patients and methods",
+        "subjects and methods",
+        "participants",
+        "study population",
+        "patient population",
+        # Data collection
+        "data collection",
+        "data acquisition",
+        "sampling methods",
+        "measurement methods",
+        # Analysis methods
+        "statistical methods",
+        "statistical analysis",
+        "analytical methods",
+        "data analysis",
+        "computational methods",
+        # Ethics
+        "ethics statement",
+        "ethical approval",
+        # Subsections
+        "cell culture",
+        "animal models",
+        "reagents",
+        "instruments",
+        "equipment",
+    ]
+
+    RESULTS_KEYWORDS = [
+        # Core
+        "results",
+        "findings",
+        "observations",
+        "outcomes",
+        # Combined sections
+        "results and discussion",
+        "results and analysis",
+        # Specific results
+        "experimental results",
+        "clinical results",
+        "main results",
+        "primary results",
+        "secondary results",
+        # Data presentation
+        "data",
+        "measurements",
+        "output",
+    ]
+
+    DISCUSSION_KEYWORDS = [
+        # Core
+        "discussion",
+        "interpretation",
+        "analysis and discussion",
+        # Combined
+        "results and discussion",
+        "discussion and conclusions",
+        "discussion and conclusion",
+        # Specific aspects
+        "implications",
+        "significance",
+        "limitations",
+        "study limitations",
+        "limitations of the study",
+        # Future work
+        "future work",
+        "future research",
+        "future directions",
+        "further research",
+    ]
+
+    CONCLUSION_KEYWORDS = [
+        # Core
+        "conclusion",
+        "conclusions",
+        "concluding remarks",
+        "final remarks",
+        "summary and conclusions",
+        # Variations
+        "conclusions and perspectives",
+        "conclusions and future work",
+        "conclusions and recommendations",
+        # Specific
+        "key findings",
+        "take-home message",
+        "clinical implications",
+        "practical implications",
+    ]
+
+    ACKNOWLEDGMENTS_KEYWORDS = [
+        "acknowledgments",
+        "acknowledgements",
+        "acknowledgment",
+        "acknowledgement",
+        "credits",
+        "funding",
+        "financial support",
+        "grant support",
+        "competing interests",
+        "conflict of interest",
+        "conflicts of interest",
+        "author contributions",
+        "contributions",
+    ]
+
+    REFERENCES_KEYWORDS = [
+        "references",
+        "bibliography",
+        "citations",
+        "works cited",
+        "literature cited",
+        "reference list",
+        "bibliographic references",
+    ]
+
+    SUPPLEMENTARY_KEYWORDS = [
+        "supplementary materials",
+        "supplementary material",
+        "supplementary information",
+        "supplementary data",
+        "supporting information",
+        "appendix",
+        "appendices",
+        "supplemental data",
+        "additional files",
+        "supplementary figures",
+        "supplementary tables",
+    ]
+
+    # Section order (for validation and priority)
+    # Title has no keywords - extracted from document start to abstract
+    SECTION_ORDER = [
+        ("title", []),  # Special: from document start to abstract
+        ("abstract", ABSTRACT_KEYWORDS),
+        ("introduction", INTRODUCTION_KEYWORDS),
+        ("methods", METHODS_KEYWORDS),
+        ("results", RESULTS_KEYWORDS),
+        ("discussion", DISCUSSION_KEYWORDS),
+        ("conclusion", CONCLUSION_KEYWORDS),
+        ("acknowledgments", ACKNOWLEDGMENTS_KEYWORDS),
+        ("references", REFERENCES_KEYWORDS),
+        ("supplementary", SUPPLEMENTARY_KEYWORDS),
+    ]
 
     def parse(self, file_path: str) -> ParsedDocument:
         """Parse PDF from file path"""
@@ -80,6 +280,7 @@ class PDFParser(BaseParser):
         # Extract text using PyMuPDF
         doc = fitz.open(file_path)
         text = self._extract_text_pymupdf(doc)
+
         page_count = len(doc)
 
         # Extract metadata
@@ -87,15 +288,13 @@ class PDFParser(BaseParser):
         doc.close()
 
         # Clean text
-        text = self._clean_text(text)
+        # text = self._clean_text(text)
 
-        # Detect sections
-        sections = self._detect_sections(text)
+        # Parse text with spaCy (returns Doc object)
+        spacy_doc = self._parse_text_with_spacy(text)
 
-        # IMRAD sections (enhanced for hybrid pipeline)
-        imrad_sections = None
-        if self.enable_imrad:
-            imrad_sections = self._split_into_imrad_sections(text)
+        # Split into IMRAD sections if enabled (using spaCy Doc)
+        imrad_sections = self._split_into_sections(spacy_doc)
 
         # Word count
         word_count = self._count_words(text)
@@ -104,55 +303,13 @@ class PDFParser(BaseParser):
 
         return ParsedDocument(
             text=text,
-            sections=sections,
+            sections={},  # Legacy, use imrad_sections instead
             metadata=metadata,
             word_count=word_count,
             page_count=page_count,
             parse_time=parse_time,
             imrad_sections=imrad_sections,
-            sentences=None  # Will be populated by pattern extractors
-        )
-
-    def parse_from_bytes(self, file_bytes: bytes, filename: str = "") -> ParsedDocument:
-        """Parse PDF from bytes"""
-        start_time = time.time()
-
-        # Open document from bytes
-        doc = fitz.open(stream=file_bytes, filetype="pdf")
-        text = self._extract_text_pymupdf(doc)
-        page_count = len(doc)
-
-        # Extract metadata
-        metadata = self._extract_metadata(doc)
-        if filename:
-            metadata["filename"] = filename
-        doc.close()
-
-        # Clean text
-        text = self._clean_text(text)
-
-        # Detect sections
-        sections = self._detect_sections(text)
-
-        # IMRAD sections (enhanced for hybrid pipeline)
-        imrad_sections = None
-        if self.enable_imrad:
-            imrad_sections = self._split_into_imrad_sections(text)
-
-        # Word count
-        word_count = self._count_words(text)
-
-        parse_time = time.time() - start_time
-
-        return ParsedDocument(
-            text=text,
-            sections=sections,
-            metadata=metadata,
-            word_count=word_count,
-            page_count=page_count,
-            parse_time=parse_time,
-            imrad_sections=imrad_sections,
-            sentences=None  # Will be populated by pattern extractors
+            _spacy_doc=spacy_doc  # Private: full spaCy Doc object
         )
 
     def supports_format(self, file_extension: str) -> bool:
@@ -218,67 +375,27 @@ class PDFParser(BaseParser):
 
         return metadata
 
-    def _detect_sections(self, text: str) -> Dict[str, str]:
+    def _parse_text_with_spacy(self, text: str):
         """
-        Detect and extract sections from paper text
+        Parse text with spaCy and return Doc object
 
         Args:
-            text: Full paper text
+            text: Input text
 
         Returns:
-            Dictionary mapping section names to their content
+            spacy.Doc object with full linguistic annotations
+
+        Raises:
+            RuntimeError: If spaCy is not available
         """
-        sections = {}
-        lines = text.split('\n')
+        if not self.nlp:
+            raise RuntimeError(
+                "spaCy is required for text parsing. "
+                "Install with: pip install spacy && python -m spacy download en_core_web_sm"
+            )
 
-        # Find section boundaries
-        section_starts = []
-
-        for i, line in enumerate(lines):
-            line_stripped = line.strip()
-
-            # Check against section patterns
-            for section_name, pattern in self.SECTION_PATTERNS.items():
-                if re.match(pattern, line_stripped, re.IGNORECASE):
-                    section_starts.append((i, section_name))
-                    break
-
-        # Extract section content
-        for idx, (line_num, section_name) in enumerate(section_starts):
-            # Find end of section (next section or end of document)
-            if idx + 1 < len(section_starts):
-                end_line = section_starts[idx + 1][0]
-            else:
-                end_line = len(lines)
-
-            # Extract content (skip the header line itself)
-            content_lines = lines[line_num + 1:end_line]
-            content = '\n'.join(content_lines).strip()
-
-            if content:
-                sections[section_name] = content
-
-        # If no sections detected, try to extract abstract (often at the beginning)
-        if not sections and len(lines) > 5:
-            # Look for "abstract" keyword in first 20 lines
-            for i in range(min(20, len(lines))):
-                if re.search(r'\babstract\b', lines[i], re.IGNORECASE):
-                    # Extract next few lines as abstract
-                    abstract_lines = []
-                    for j in range(i + 1, min(i + 50, len(lines))):
-                        line = lines[j].strip()
-                        if not line:
-                            continue
-                        # Stop if we hit another section header
-                        if re.match(r'^\d+\.\s+\w+|^[A-Z\s]{10,}$', line):
-                            break
-                        abstract_lines.append(line)
-
-                    if abstract_lines:
-                        sections["abstract"] = ' '.join(abstract_lines)
-                    break
-
-        return sections
+        # Parse text with spaCy (returns Doc object)
+        return self.nlp(text)
 
     def _clean_text(self, text: str) -> str:
         """
@@ -413,83 +530,492 @@ class PDFParser(BaseParser):
             words = [self.lemmatizer.lemmatize(w) for w in name.split()]
             name = " ".join(words)
 
-        # Normalization map
+        # Comprehensive normalization map for all keyword variations
         normalization_map = {
+            # ABSTRACT section
+            "abstract": "abstract",
+            "summary": "abstract",
+            "synopsis": "abstract",
+            "précis": "abstract",
+            "overview": "abstract",
+            "graphical abstract": "abstract",
+            "structured abstract": "abstract",
+            "résumé": "abstract",
+            "zusammenfassung": "abstract",
+            "resumen": "abstract",
+
+            # INTRODUCTION section
             "introduction": "introduction",
             "background": "introduction",
+            "preamble": "introduction",
+            "prologue": "introduction",
+            "rationale": "introduction",
+            "motivation": "introduction",
+            "study background": "introduction",
+            "introduction and background": "introduction",
+            "background and significance": "introduction",
+            "clinical background": "introduction",
+            "theoretical background": "introduction",
+
+            # METHODS section
             "method": "methods",
             "methods": "methods",
+            "methodology": "methods",
             "material and method": "methods",
             "materials and method": "methods",
             "materials and methods": "methods",
+            "methods and materials": "methods",
+            "experimental method": "methods",
+            "experimental methods": "methods",
+            "experimental procedure": "methods",
+            "experimental procedures": "methods",
+            "material": "methods",
+            "materials": "methods",
+            "procedure": "methods",
+            "procedures": "methods",
+            "protocol": "methods",
+            "protocols": "methods",
+            "approach": "methods",
+            "technique": "methods",
+            "techniques": "methods",
+            "study design": "methods",
+            "experimental design": "methods",
+            "research design": "methods",
+            "study protocol": "methods",
+            "experimental protocol": "methods",
+            "patient and method": "methods",
+            "patients and methods": "methods",
+            "subject and method": "methods",
+            "subjects and methods": "methods",
+            "participant": "methods",
+            "participants": "methods",
+            "study population": "methods",
+            "patient population": "methods",
+            "data collection": "methods",
+            "data acquisition": "methods",
+            "sampling method": "methods",
+            "sampling methods": "methods",
+            "measurement method": "methods",
+            "measurement methods": "methods",
+            "statistical method": "methods",
+            "statistical methods": "methods",
+            "statistical analysis": "methods",
+            "analytical method": "methods",
+            "analytical methods": "methods",
+            "data analysis": "methods",
+            "computational method": "methods",
+            "computational methods": "methods",
+            "ethics statement": "methods",
+            "ethical approval": "methods",
+
+            # RESULTS section
             "result": "results",
             "results": "results",
+            "finding": "results",
+            "findings": "results",
+            "observation": "results",
+            "observations": "results",
+            "outcome": "results",
+            "outcomes": "results",
+            "result and analysis": "results",
+            "results and analysis": "results",
+            "experimental result": "results",
+            "experimental results": "results",
+            "clinical result": "results",
+            "clinical results": "results",
+            "main result": "results",
+            "main results": "results",
+            "primary result": "results",
+            "primary results": "results",
+            "secondary result": "results",
+            "secondary results": "results",
+            "data": "results",
+            "measurement": "results",
+            "measurements": "results",
+            "output": "results",
+
+            # Combined RESULTS + DISCUSSION
             "result and discussion": "results",
             "results and discussion": "results",
+
+            # DISCUSSION section
             "discussion": "discussion",
+            "interpretation": "discussion",
+            "analysis and discussion": "discussion",
+            "discussion and conclusion": "discussion",
+            "discussion and conclusions": "discussion",
+            "implication": "discussion",
+            "implications": "discussion",
+            "significance": "discussion",
+            "limitation": "discussion",
+            "limitations": "discussion",
+            "study limitation": "discussion",
+            "study limitations": "discussion",
+            "limitations of the study": "discussion",
+            "future work": "discussion",
+            "future research": "discussion",
+            "future direction": "discussion",
+            "future directions": "discussion",
+            "further research": "discussion",
             "general discussion": "discussion",
+
+            # CONCLUSION section
             "conclusion": "conclusion",
             "conclusions": "conclusion",
-            "summary": "conclusion",
-            "abstract": "abstract",
+            "concluding remark": "conclusion",
+            "concluding remarks": "conclusion",
+            "final remark": "conclusion",
+            "final remarks": "conclusion",
+            "summary and conclusion": "conclusion",
+            "summary and conclusions": "conclusion",
+            "conclusion and perspective": "conclusion",
+            "conclusions and perspectives": "conclusion",
+            "conclusion and future work": "conclusion",
+            "conclusions and future work": "conclusion",
+            "conclusion and recommendation": "conclusion",
+            "conclusions and recommendations": "conclusion",
+            "key finding": "conclusion",
+            "key findings": "conclusion",
+            "take-home message": "conclusion",
+            "clinical implication": "conclusion",
+            "clinical implications": "conclusion",
+            "practical implication": "conclusion",
+            "practical implications": "conclusion",
+
+            # ACKNOWLEDGMENTS section
             "acknowledgment": "acknowledgments",
             "acknowledgments": "acknowledgments",
+            "acknowledgement": "acknowledgments",
+            "acknowledgements": "acknowledgments",
+            "credit": "acknowledgments",
+            "credits": "acknowledgments",
+            "funding": "acknowledgments",
+            "financial support": "acknowledgments",
+            "grant support": "acknowledgments",
+            "competing interest": "acknowledgments",
+            "competing interests": "acknowledgments",
+            "conflict of interest": "acknowledgments",
+            "conflicts of interest": "acknowledgments",
+            "author contribution": "acknowledgments",
+            "author contributions": "acknowledgments",
+            "contribution": "acknowledgments",
+            "contributions": "acknowledgments",
+
+            # REFERENCES section
             "reference": "references",
             "references": "references",
+            "bibliography": "references",
+            "citation": "references",
+            "citations": "references",
+            "works cited": "references",
+            "literature cited": "references",
+            "reference list": "references",
+            "bibliographic reference": "references",
+            "bibliographic references": "references",
+
+            # SUPPLEMENTARY section
+            "supplementary material": "supplementary",
+            "supplementary materials": "supplementary",
+            "supplementary information": "supplementary",
+            "supplementary data": "supplementary",
+            "supporting information": "supplementary",
+            "appendix": "supplementary",
+            "appendices": "supplementary",
+            "supplemental data": "supplementary",
+            "additional file": "supplementary",
+            "additional files": "supplementary",
+            "supplementary figure": "supplementary",
+            "supplementary figures": "supplementary",
+            "supplementary table": "supplementary",
+            "supplementary tables": "supplementary",
         }
 
         return normalization_map.get(name, name)
 
-    def _split_into_imrad_sections(self, text: str) -> Dict[str, str]:
+    def _create_section_pattern(self, keywords: List[str]) -> re.Pattern:
         """
-        Split text into IMRAD sections (from division_into_semantic_blocks.py)
+        Create regex pattern for detecting section headers from keyword list
 
         Args:
-            text: Full paper text
+            keywords: List of keywords for this section type
+
+        Returns:
+            Compiled regex pattern
+        """
+        # Escape special characters and sort by length (longest first for better matching)
+        escaped_keywords = [re.escape(k) for k in sorted(keywords, key=len, reverse=True)]
+
+        # Pattern explanation:
+        # (?:^|\n)\s*           - Start of line
+        # (?:\d+\.?|[IVXLCM]+\.?|[A-Z]\.?)?\s*  - Optional numbering (numeric, Roman, letter)
+        # (?:keywords)\b        - One of the keywords (word boundary)
+        # [:.\-–—\s]*          - Optional trailing punctuation/whitespace
+        pattern_str = (
+            r'(?:^|\n)\s*'
+            r'(?:\d+\.?|[IVXLCM]+\.?|[A-Z]\.?)?\s*'
+            r'(?:' + '|'.join(escaped_keywords) + r')\b'
+            r'[:.\-–—\s]*'
+        )
+
+        return re.compile(pattern_str, re.IGNORECASE | re.MULTILINE)
+
+    def _normalize_header(self, text: str) -> str:
+        """
+        Normalize section header text by removing numbering and punctuation
+
+        Args:
+            text: Raw header text
+
+        Returns:
+            Normalized header text
+        """
+        text = text.strip()
+
+        # Remove numeric numbering (1., 2., etc.)
+        text = re.sub(r'^\d+\.?\s*', '', text)
+
+        # Remove Roman numerals (I., II., III., etc.)
+        text = re.sub(r'^[IVXLCM]+\.?\s*', '', text, flags=re.IGNORECASE)
+
+        # Remove letter numbering (A., B., etc.) - only when followed by period + space
+        text = re.sub(r'^[A-Z]\.\s+', '', text)
+
+        # Remove trailing punctuation
+        text = re.sub(r'[:.\-–—]+$', '', text)
+
+        # Normalize whitespace
+        text = re.sub(r'\s+', ' ', text)
+
+        return text.strip().lower()
+
+    def _find_first_keyword_match(self, text: str, keywords: List[str], search_start_pos: int = 0) -> Optional[Dict[str, Any]]:
+        """
+        Find FIRST occurrence of ANY keyword in priority order (case-insensitive substring search)
+
+        Keywords are searched in order of priority (as provided in the list).
+        Returns the first match found, checking keywords one by one.
+
+        Args:
+            text: Text to search in
+            keywords: List of keywords in priority order (e.g., ['introduction', 'background', ...])
+            search_start_pos: Position to start searching from
+
+        Returns:
+            Dict with 'keyword', 'start', 'end', 'matched_text' or None if not found
+        """
+        text_lower = text.lower()
+
+        # Search keywords in priority order
+        for keyword in keywords:
+            keyword_lower = keyword.lower()
+
+            # Find first occurrence of this keyword
+            pos = text_lower.find(keyword_lower, search_start_pos)
+
+            if pos != -1:
+                # Found! Return immediately (priority order)
+                return {
+                    'keyword': keyword,
+                    'start': pos,
+                    'end': pos + len(keyword),
+                    'matched_text': text[pos:pos + len(keyword)]
+                }
+
+        # No keyword found
+        return None
+
+    def _validate_with_regex(self, text: str, pos: int, keyword: str) -> Dict[str, Any]:
+        """
+        Validate if keyword occurrence at position matches section header pattern
+
+        Uses the same pattern as _create_section_pattern for consistency:
+        - Optional line start
+        - Optional numbering (1., I., A.)
+        - Keyword (case-insensitive)
+        - Optional punctuation/whitespace
+
+        Args:
+            text: Full text
+            pos: Position of keyword occurrence
+            keyword: The keyword found
+
+        Returns:
+            Dict with 'valid', 'match_start', 'match_end' keys
+        """
+        # Create regex pattern for this keyword (same as _create_section_pattern)
+        escaped_keyword = re.escape(keyword)
+
+        # Pattern: optional line start + optional numbering + keyword + optional punctuation
+        pattern = re.compile(
+            r'(?:^|\n)\s*'
+            r'(?:\d+\.?|[IVXLCM]+\.?|[A-Z]\.?)?\s*'
+            + escaped_keyword + r'\b'
+            r'[:.\-–—\s]*',
+            re.IGNORECASE | re.MULTILINE
+        )
+
+        # Search around the position (allow some padding for line start detection)
+        search_start = max(0, pos - 20)
+        search_end = min(len(text), pos + len(keyword) + 20)
+        search_text = text[search_start:search_end]
+
+        match = pattern.search(search_text)
+
+        if match:
+            # Calculate absolute positions
+            match_abs_start = search_start + match.start()
+            match_abs_end = search_start + match.end()
+
+            # Valid if our keyword position is within the match
+            is_valid = (match_abs_start <= pos < match_abs_end)
+
+            if is_valid:
+                return {
+                    'valid': True,
+                    'match_start': match_abs_start,
+                    'match_end': match_abs_end
+                }
+
+        # No regex match - not a valid section header
+        return {
+            'valid': False,
+            'match_start': pos,
+            'match_end': pos + len(keyword)
+        }
+
+    def _split_into_sections(self, spacy_doc: Any) -> Dict[str, str]:
+        """
+        Split text into IMRAD sections using sequential keyword-based matching
+
+        New Algorithm (as per requirements):
+        1. Search sections in strict order: title → abstract → introduction → methods → ...
+        2. For each section:
+           - Search keywords in priority order (e.g., 'introduction' before 'background')
+           - Find FIRST occurrence of ANY keyword
+           - Validate with regex pattern
+           - If valid → mark as section boundary
+        3. Next section search starts AFTER current section boundary
+        4. Extract content between boundaries
+
+        Args:
+            spacy_doc: spaCy Doc object with full linguistic annotations
 
         Returns:
             Dictionary mapping section names to content
         """
-        # Clean text first
-        text = self._clean_text_remove_figures_tables(text)
+        # Extract text from spaCy Doc
+        text = spacy_doc.text
 
         # Remove excessive newlines
         text = re.sub(r'\n{2,}', '\n\n', text)
 
-        # Section headers
-        headers = [
-            r'abstract',
-            r'introduction|background',
-            r'materials\s+and\s+methods|methods?',
-            r'results?',
-            r'discussion',
-            r'conclusion[s]?',
-            r'references',
-            r'acknowledg(?:ement|ements|e)?'
-        ]
-        headers_union = '|'.join(headers)
+        # List of section boundaries (position, name, end_of_header)
+        section_boundaries = []
 
-        pattern = rf'(?:^|\n)\s*(?:\d+\.?|[IVXLCM]+\.)?\s*(?P<header>{headers_union})\b[:.]?\s*'
-        matches = list(re.finditer(pattern, text, flags=re.IGNORECASE))
+        # Current search position (sections must appear in strict order)
+        search_start_pos = 0
 
-        if not matches:
-            # No headers found, return full text
+        # Process each section in order
+        for section_name, keywords in self.SECTION_ORDER:
+            # Special handling for title section (no keywords)
+            if section_name == "title":
+                # Title is implicit: from start to first abstract keyword
+                # Will be added after we find abstract
+                continue
+
+            if not keywords:
+                continue
+
+            # Find FIRST keyword match (in priority order)
+            keyword_match = self._find_first_keyword_match(text, keywords, search_start_pos)
+
+            if not keyword_match:
+                # Section not found, continue to next
+                continue
+
+            # Validate with regex pattern
+            validation = self._validate_with_regex(text, keyword_match['start'], keyword_match['keyword'])
+
+            if not validation['valid']:
+                # Keyword found but doesn't match section header pattern
+                continue
+
+            # Valid section boundary found!
+            section_boundaries.append({
+                'section_name': section_name,
+                'start': validation['match_start'],
+                'end': validation['match_end']
+            })
+
+            # Next search starts AFTER this section header
+            search_start_pos = validation['match_end']
+
+        # If no sections found at all, return full text
+        if not section_boundaries:
             return {"full_text": text.strip()}
 
-        sections = {}
-        for i, m in enumerate(matches):
-            header_raw = m.group('header')
-            normalized_header = self._normalize_section_name(header_raw)
+        # Sort boundaries by position (should already be sorted, but ensure correctness)
+        section_boundaries.sort(key=lambda x: x['start'])
 
-            start = m.end()
-            end = matches[i + 1].start() if i + 1 < len(matches) else len(text)
-            section_text = text[start:end].lstrip()
+        # Add title section if we found abstract
+        first_section = section_boundaries[0]
+        if first_section['section_name'] == 'abstract' and first_section['start'] > 0:
+            # Title exists from start to abstract
+            section_boundaries.insert(0, {
+                'section_name': 'title',
+                'start': 0,
+                'end': 0  # Title has no header, content starts immediately
+            })
+
+        # Extract section texts between boundaries
+        return self._extract_section_texts(text, section_boundaries)
+
+    def _extract_section_texts(self, text: str, section_boundaries: List[Dict[str, Any]]) -> Dict[str, str]:
+        """
+        Extract section texts between boundaries
+
+        Args:
+            text: Full document text
+            section_boundaries: List of section boundaries with 'section_name', 'start', 'end' keys
+
+        Returns:
+            Dictionary mapping section names to extracted content
+        """
+        sections = {}
+
+        for i, boundary in enumerate(section_boundaries):
+            section_name = boundary['section_name']
+
+            # Content starts after header (or at start for title)
+            if section_name == 'title':
+                content_start = 0
+            else:
+                content_start = boundary['end']
+
+            # Content ends at next section header or end of text
+            if i + 1 < len(section_boundaries):
+                content_end = section_boundaries[i + 1]['start']
+            else:
+                content_end = len(text)
+
+            # Extract section text
+            section_text = text[content_start:content_end]
+
+            # Clean up whitespace
+            if section_name == 'title':
+                # For title, preserve leading whitespace but remove trailing
+                section_text = section_text.rstrip()
+            else:
+                # For other sections, strip both sides
+                section_text = section_text.strip()
+
+            # Remove excessive newlines
             section_text = re.sub(r'\n{3,}', '\n\n', section_text)
 
-            # Merge sections with same normalized name
-            if normalized_header in sections:
-                sections[normalized_header] += "\n\n" + section_text
+            # Merge if same section name appears multiple times (e.g., multiple Methods subsections)
+            if section_name in sections:
+                sections[section_name] += "\n\n" + section_text
             else:
-                sections[normalized_header] = section_text
+                sections[section_name] = section_text
 
         return sections

@@ -131,15 +131,19 @@ class HybridPipeline(BasePipeline):
         # For plain text input, create ParsedDocument manually
         from src.parsers.base_parser import ParsedDocument
 
-        # Try to split into IMRAD sections
-        imrad_sections = parser._split_into_imrad_sections(paper_text)
+        # Parse text with spaCy first
+        spacy_doc = parser._parse_text_with_spacy(paper_text)
+
+        # Split into IMRAD sections using spaCy Doc
+        imrad_sections = parser._split_into_sections(spacy_doc)
 
         parsed_doc = ParsedDocument(
             text=paper_text,
             sections={},
             metadata=metadata or {},
             word_count=len(paper_text.split()),
-            imrad_sections=imrad_sections
+            imrad_sections=imrad_sections,
+            _spacy_doc=spacy_doc
         )
 
         all_entities = []
@@ -147,7 +151,7 @@ class HybridPipeline(BasePipeline):
         # ========== PHASE 1: Pattern Extraction (FREE) ==========
 
         # Extract hypotheses from Introduction
-        intro_text = parsed_doc.get_imrad_section("introduction") or ""
+        intro_text = parsed_doc.get_section("introduction") or ""
         if intro_text:
             hyp_entities = self.hypothesis_extractor.extract(
                 intro_text,
@@ -157,7 +161,7 @@ class HybridPipeline(BasePipeline):
             extraction_methods["pattern_hypothesis"] += len(hyp_entities)
 
         # Extract methods from Methods section
-        methods_text = parsed_doc.get_imrad_section("methods") or ""
+        methods_text = parsed_doc.get_section("methods") or ""
         if methods_text:
             method_entities = self.method_extractor.extract(
                 methods_text,
@@ -183,7 +187,7 @@ class HybridPipeline(BasePipeline):
             extraction_methods["pattern_experiments"] += len(exp_entities)
 
         # Extract results from Results section
-        results_text = parsed_doc.get_imrad_section("results") or ""
+        results_text = parsed_doc.get_section("results") or ""
         if results_text:
             result_entities = self.result_extractor.extract(
                 results_text,
@@ -230,8 +234,8 @@ class HybridPipeline(BasePipeline):
                     print(f"Warning: LLM hypothesis extraction failed: {e}")
 
             # Extract conclusions from Discussion/Conclusion
-            discussion_text = parsed_doc.get_imrad_section("discussion") or ""
-            conclusion_text = parsed_doc.get_imrad_section("conclusion") or ""
+            discussion_text = parsed_doc.get_section("discussion") or ""
+            conclusion_text = parsed_doc.get_section("conclusion") or ""
             combined_conclusion_text = (discussion_text + "\n\n" + conclusion_text).strip()
 
             if combined_conclusion_text:
