@@ -22,7 +22,8 @@ from src.extractors import (
     ResultExtractor,
     NLPFactExtractor,
     SelectiveLLMExtractor,
-    EntityKeywordGenerator
+    EntityKeywordGenerator,
+    SentenceEmbedder
 )
 
 
@@ -31,8 +32,9 @@ class HybridPipeline(BasePipeline):
     Hybrid extraction pipeline for cost-optimized extraction
 
     Strategy:
-    0. Generate context-specific keywords via LLM (~$0.001-0.002/paper)
-    1. Parse PDF with IMRAD sections
+    0. Parse PDF with IMRAD sections
+    0.5. Create sentence embeddings for all sentences (~$0.00004/paper) ✨ NEW
+    1. Generate context-specific keywords via LLM (~$0.001-0.002/paper)
     2. Apply pattern extractors with dynamic keywords to relevant sections (FREE)
     3. Apply NLP extractor for facts (~$0.001/paper)
     4. Use selective LLM only for low-confidence cases (DISABLED - kept for future)
@@ -99,6 +101,12 @@ class HybridPipeline(BasePipeline):
             llm_model=llm_model
         )
 
+        # Sentence embedder for semantic search
+        self.sentence_embedder = SentenceEmbedder(
+            llm_provider=llm_provider,
+            batch_size=config.get("embedding_batch_size", 100)
+        )
+
     def extract(
         self,
         parsed_doc: ParsedDocument,
@@ -125,6 +133,23 @@ class HybridPipeline(BasePipeline):
         extraction_methods = defaultdict(int)
 
         all_entities = []
+
+        # ========== PHASE 0.5: Sentence Embedding (~$0.00004) ==========
+
+        # Create sentence embeddings if not already present
+        if not parsed_doc.sentences:
+            print("Creating sentence embeddings...")
+            parsed_doc = self.sentence_embedder.process_document(parsed_doc)
+
+            # Track embedding metrics
+            emb_metrics = self.sentence_embedder.get_metrics()
+            total_tokens += emb_metrics["total_tokens"]
+            total_cost += emb_metrics["total_cost_usd"]
+
+            print(f"Embeddings created: {emb_metrics['total_sentences']} sentences, "
+                  f"{emb_metrics['total_tokens']} tokens, "
+                  f"${emb_metrics['total_cost_usd']:.6f}, "
+                  f"{emb_metrics['embedding_time_seconds']:.2f}s")
 
         # ========== PHASE 0: Keyword Generation (~$0.001-0.002) ==========
 
@@ -230,23 +255,38 @@ class HybridPipeline(BasePipeline):
 
         # Calculate metrics
         processing_time = time.time() - start_time
+
+        # Prepare metadata
+        metadata_dict = {
+            "pipeline": "hybrid",
+            "extraction_methods": dict(extraction_methods),
+            "sections_processed": list(parsed_doc.imrad_sections.keys()) if parsed_doc.imrad_sections else [],
+            "keyword_generation": {
+                "tokens_used": kg_metrics["total_tokens"],
+                "cost_usd": kg_metrics["total_cost_usd"],
+                "entity_types_covered": len(keywords_by_type),
+                "cache_hit_rate": kg_metrics["cache_hit_rate"]
+            }
+        }
+
+        # Add embedding metrics if present
+        if parsed_doc.sentences:
+            emb_metrics = self.sentence_embedder.get_metrics()
+            metadata_dict["sentence_embeddings"] = {
+                "total_sentences": emb_metrics["total_sentences"],
+                "tokens_used": emb_metrics["total_tokens"],
+                "cost_usd": emb_metrics["total_cost_usd"],
+                "embedding_time": emb_metrics["embedding_time_seconds"],
+                "cache_hit_rate": emb_metrics["cache_hit_rate"]
+            }
+
         metrics = PipelineMetrics(
             processing_time=processing_time,
             tokens_used=total_tokens,
             cost_usd=total_cost,
             entities_extracted=len(all_entities),
             relationships_extracted=len(relationships),
-            metadata={
-                "pipeline": "hybrid",
-                "extraction_methods": dict(extraction_methods),
-                "sections_processed": list(parsed_doc.imrad_sections.keys()) if parsed_doc.imrad_sections else [],
-                "keyword_generation": {
-                    "tokens_used": kg_metrics["total_tokens"],
-                    "cost_usd": kg_metrics["total_cost_usd"],
-                    "entity_types_covered": len(keywords_by_type),
-                    "cache_hit_rate": kg_metrics["cache_hit_rate"]
-                }
-            }
+            metadata=metadata_dict
         )
 
         self.last_metrics = metrics

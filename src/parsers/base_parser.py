@@ -1,9 +1,11 @@
 """Base parser for document parsing"""
 
 from abc import ABC, abstractmethod
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 from dataclasses import dataclass
 from datetime import datetime
+
+from src.models import Sentence
 
 
 @dataclass
@@ -18,6 +20,7 @@ class ParsedDocument:
     imrad_sections: Optional[Dict[str, str]] = None  # IMRAD structured sections
     _spacy_doc: Optional[Any] = None   # Private: spaCy Doc object with full linguistic annotations
     title: Optional[str] = None        # Document title
+    sentences: Optional[List[Sentence]] = None  # List of Sentence objects with embeddings
 
     def get_section(self, section_name: str) -> Optional[str]:
         """Get IMRAD section text by name (case-insensitive)"""
@@ -39,6 +42,42 @@ class ParsedDocument:
         if self._spacy_doc:
             return [sent.text.strip() for sent in self._spacy_doc.sents]
         return []
+
+    def get_sentences_by_section(self, section_name: str) -> List[Any]:
+        """
+        Get all Sentence objects from a specific section
+
+        Args:
+            section_name: Name of the section (e.g., "introduction", "methods")
+
+        Returns:
+            List of Sentence objects from the specified section
+        """
+        if not self.sentences:
+            return []
+        return [s for s in self.sentences if s.section == section_name]
+
+    def get_sentence_texts(self) -> List[str]:
+        """
+        Get only the text of all sentences
+
+        Returns:
+            List of sentence text strings
+        """
+        if not self.sentences:
+            return []
+        return [s.text for s in self.sentences]
+
+    def has_embeddings(self) -> bool:
+        """
+        Check if document has sentence embeddings
+
+        Returns:
+            True if sentences have embeddings
+        """
+        if not self.sentences or len(self.sentences) == 0:
+            return False
+        return self.sentences[0].has_embedding()
 
 
 class BaseParser(ABC):

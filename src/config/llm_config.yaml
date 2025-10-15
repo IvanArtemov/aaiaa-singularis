@@ -32,7 +32,7 @@ ollama:
   # Models (must be installed via: ollama pull <model>)
   models:
     chat: "llama3.1:8b"
-    embeddings: "nomic-embed-text"
+    embeddings: "bge-m3"
 
   # Parameters
   temperature: 0.1

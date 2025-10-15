@@ -14,6 +14,8 @@ from .results import (
 
 from .graph import KnowledgeGraph
 
+from .sentence import Sentence
+
 __all__ = [
     # Entities
     "Entity",
@@ -27,4 +29,7 @@ __all__ = [
 
     # Graph
     "KnowledgeGraph",
+
+    # Sentence
+    "Sentence",
 ]
