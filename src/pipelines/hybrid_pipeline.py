@@ -101,17 +101,15 @@ class HybridPipeline(BasePipeline):
 
     def extract(
         self,
-        paper_text: str,
-        paper_id: str,
-        metadata: Optional[Dict[str, Any]] = None
+        parsed_doc: ParsedDocument,
+        paper_id: str
     ) -> ExtractionResult:
         """
         Extract entities and relationships using hybrid approach
 
         Args:
-            paper_text: Full text of the paper
+            parsed_doc: ParsedDocument with text, sections, and metadata
             paper_id: Unique paper identifier
-            metadata: Optional paper metadata
 
         Returns:
             ExtractionResult with extracted entities and relationships
@@ -119,32 +117,12 @@ class HybridPipeline(BasePipeline):
         start_time = time.time()
 
         # Validate input
-        self._validate_paper_text(paper_text)
+        self._validate_parsed_doc(parsed_doc)
 
         # Track metrics
         total_tokens = 0
         total_cost = 0.0
         extraction_methods = defaultdict(int)
-
-        # Parse with IMRAD sections
-        parser = PDFParser(enable_imrad=True)
-        # For plain text input, create ParsedDocument manually
-        from src.parsers.base_parser import ParsedDocument
-
-        # Parse text with spaCy first
-        spacy_doc = parser._parse_text_with_spacy(paper_text)
-
-        # Split into IMRAD sections using spaCy Doc
-        imrad_sections = parser._split_into_sections(spacy_doc)
-
-        parsed_doc = ParsedDocument(
-            text=paper_text,
-            sections={},
-            metadata=metadata or {},
-            word_count=len(paper_text.split()),
-            imrad_sections=imrad_sections,
-            _spacy_doc=spacy_doc
-        )
 
         all_entities = []
 
@@ -278,7 +256,7 @@ class HybridPipeline(BasePipeline):
                 "pipeline": "hybrid",
                 "extraction_methods": dict(extraction_methods),
                 "llm_fallback_used": self.use_llm_fallback and total_cost > 0,
-                "sections_processed": list(imrad_sections.keys()) if imrad_sections else []
+                "sections_processed": list(parsed_doc.imrad_sections.keys()) if parsed_doc.imrad_sections else []
             }
         )
 
@@ -290,7 +268,7 @@ class HybridPipeline(BasePipeline):
             entities=dict(entities_by_type),
             relationships=relationships,
             metrics=metrics,
-            metadata=metadata or {}
+            metadata=parsed_doc.metadata
         )
 
         return result

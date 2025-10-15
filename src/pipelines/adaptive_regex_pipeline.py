@@ -76,17 +76,15 @@ class AdaptiveRegexPipeline(BasePipeline):
 
     def extract(
         self,
-        paper_text: str,
-        paper_id: str,
-        metadata: Optional[Dict[str, Any]] = None
+        parsed_doc: ParsedDocument,
+        paper_id: str
     ) -> ExtractionResult:
         """
         Extract entities and relationships using adaptive regex approach
 
         Args:
-            paper_text: Full text of the paper
+            parsed_doc: ParsedDocument with text, sections, and metadata
             paper_id: Unique paper identifier
-            metadata: Optional paper metadata
 
         Returns:
             ExtractionResult with extracted entities and relationships
@@ -94,26 +92,7 @@ class AdaptiveRegexPipeline(BasePipeline):
         start_time = time.time()
 
         # Validate input
-        self._validate_paper_text(paper_text)
-
-        # Parse with IMRAD sections
-        parser = PDFParser(enable_imrad=True)
-
-        # todo: логика парсинга документа должна быть внутри парсера
-        # Parse text with spaCy first
-        spacy_doc = parser._parse_text_with_spacy(paper_text)
-
-        # Split into IMRAD sections using spaCy Doc
-        imrad_sections = parser._split_into_sections(spacy_doc)
-
-        parsed_doc = ParsedDocument(
-            text=paper_text,
-            sections={},
-            metadata=metadata or {},
-            word_count=len(paper_text.split()),
-            imrad_sections=imrad_sections,
-            _spacy_doc=spacy_doc
-        )
+        self._validate_parsed_doc(parsed_doc)
 
         all_entities = []
         extraction_methods = defaultdict(int)
@@ -125,7 +104,7 @@ class AdaptiveRegexPipeline(BasePipeline):
         if not abstract_text and not intro_text:
             print("Warning: No Abstract or Introduction found. Pipeline requires these sections.")
             # Return empty result
-            return self._create_empty_result(paper_id, metadata, time.time() - start_time)
+            return self._create_empty_result(paper_id, parsed_doc.metadata, time.time() - start_time)
 
         # ========== THREE-STAGE EXTRACTION ==========
 
@@ -178,7 +157,7 @@ class AdaptiveRegexPipeline(BasePipeline):
                 "required_tokens_count": len(generated_tokens.get("required_tokens", [])),
                 "optional_tokens_count": len(generated_tokens.get("optional_tokens", [])),
                 "llm_model": self.llm_model,
-                "sections_processed": list(imrad_sections.keys()) if imrad_sections else []
+                "sections_processed": list(parsed_doc.imrad_sections.keys()) if parsed_doc.imrad_sections else []
             }
         )
 
@@ -203,7 +182,7 @@ class AdaptiveRegexPipeline(BasePipeline):
             entities=dict(entities_by_type),
             relationships=relationships,
             metrics=metrics,
-            metadata=metadata or {}
+            metadata=parsed_doc.metadata
         )
 
         return result

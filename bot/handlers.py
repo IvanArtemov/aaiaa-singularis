@@ -1,6 +1,5 @@
 """Telegram bot handlers for PDF processing"""
 
-import os
 import logging
 from pathlib import Path
 from telegram import Update
@@ -187,9 +186,8 @@ class BotHandlers:
                 paper_id = f"tg_{user.id}_{unique_filename.replace('.pdf', '')}"
 
                 result = pipeline.extract(
-                    paper_text=parsed_doc.text,
-                    paper_id=paper_id,
-                    metadata=parsed_doc.metadata
+                    parsed_doc=parsed_doc,
+                    paper_id=paper_id
                 )
 
                 logger.info(

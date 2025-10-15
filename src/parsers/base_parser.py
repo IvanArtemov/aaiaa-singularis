@@ -17,6 +17,7 @@ class ParsedDocument:
     parse_time: Optional[float] = None # Parsing time in seconds
     imrad_sections: Optional[Dict[str, str]] = None  # IMRAD structured sections
     _spacy_doc: Optional[Any] = None   # Private: spaCy Doc object with full linguistic annotations
+    title: Optional[str] = None        # Document title
 
     def get_section(self, section_name: str) -> Optional[str]:
         """Get IMRAD section text by name (case-insensitive)"""

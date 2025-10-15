@@ -104,17 +104,15 @@ Extract ALL relevant entities and relationships. Be thorough but precise."""
 
     def extract(
         self,
-        paper_text: str,
-        paper_id: str,
-        metadata: Optional[Dict[str, Any]] = None
+        parsed_doc: "ParsedDocument",
+        paper_id: str
     ) -> ExtractionResult:
         """
         Extract entities and relationships using LLM
 
         Args:
-            paper_text: Full text of the paper
+            parsed_doc: ParsedDocument with text, sections, and metadata
             paper_id: Unique paper identifier
-            metadata: Optional paper metadata
 
         Returns:
             ExtractionResult with extracted entities and relationships
@@ -122,7 +120,10 @@ Extract ALL relevant entities and relationships. Be thorough but precise."""
         start_time = time.time()
 
         # Validate input
-        self._validate_paper_text(paper_text)
+        self._validate_parsed_doc(parsed_doc)
+
+        # Get text from parsed document
+        paper_text = parsed_doc.text
 
         # Truncate if too long (gpt-5-mini context limit)
         max_chars = 100000  # ~25k tokens
@@ -189,7 +190,7 @@ Extract ALL relevant entities and relationships. Be thorough but precise."""
             entities=entities_by_type,
             relationships=relationships,
             metrics=metrics,
-            metadata=metadata or {}
+            metadata=parsed_doc.metadata
         )
 
         return result

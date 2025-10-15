@@ -109,8 +109,11 @@ python scripts/batch_download_cross_referenced.py
 # Batch download KG papers (arXiv)
 python scripts/batch_download_arxiv_kg.py
 
-# Test PDF parser
+# Test PDF parser (PyMuPDF)
 python scripts/example_pdf_parser.py
+
+# Test GROBID parser (structured extraction)
+python scripts/example_grobid_parser.py
 
 # Test LLM extraction pipeline
 python scripts/example_llm_pipeline.py
@@ -133,6 +136,19 @@ Add to `.env`:
 NCBI_API_KEY=your_api_key_here
 ```
 This increases rate limit from 3 req/sec to 10 req/sec.
+
+**GROBID Service (recommended for production):**
+Start GROBID Docker container:
+```bash
+# Pull GROBID image
+docker pull lfoppiano/grobid:0.8.0
+
+# Run GROBID service on port 8070
+docker run --rm -p 8070:8070 lfoppiano/grobid:0.8.0
+
+# Verify service is running
+curl http://localhost:8070/api/isalive
+```
 
 ---
 
@@ -249,13 +265,27 @@ embeddings = llm.embed(["text1", "text2"])
 - `base_parser.py` - Abstract parser interface
 - `pdf_parser.py` - PDF parsing using PyMuPDF (fitz)
   - Text extraction with layout preservation
-  - Section detection (Abstract, Methods, Results, etc.)
+  - Heuristic-based IMRAD section detection
   - Metadata extraction (title, authors, dates)
   - Optional table extraction via pdfplumber
+  - Fast local processing (~1 sec/paper)
+  - Good for prototyping without external dependencies
+
+- `grobid_parser.py` - ML-based PDF parsing using GROBID service ⭐ **RECOMMENDED**
+  - Machine learning extraction (>90% accuracy)
+  - Structured TEI XML output with >55 label types
+  - High-quality IMRAD section extraction
+  - Structured metadata (title, authors, affiliations, DOI, PMID)
+  - Parsed bibliographic references
+  - Figure/table detection with coordinates
+  - FREE (runs locally in Docker)
+  - ~3-5 sec/paper
+  - **Use for production pipeline**
 
 **Section Detection:**
-Automatically detects common paper sections using regex patterns:
-- Abstract, Introduction, Methods, Results, Discussion, Conclusion, References
+- **PyMuPDF:** Regex-based heuristics for section headers
+- **GROBID:** ML-based extraction with `<div type="introduction">` TEI tags
+- Both output IMRAD sections: Abstract, Introduction, Methods, Results, Discussion, Conclusion
 
 ### Visualization (`src/visualization/`)
 
@@ -328,8 +358,10 @@ Elif entity_type in [hypotheses, conclusions]:
 ### Core (Existing)
 - **Python 3.10+**
 - **OpenAI SDK** - gpt-5-mini for LLM extraction
-- **PyMuPDF (fitz)** - PDF text extraction
+- **PyMuPDF (fitz)** - Fast local PDF text extraction
+- **grobid-client-python** - ML-based structured PDF extraction (RECOMMENDED)
 - **pdfplumber** - PDF table extraction
+- **spacy** - NLP library for sentence splitting and entity recognition
 - **requests** - HTTP client for API calls
 - **arxiv** - arXiv API wrapper for paper fetching
 - **python-dotenv** - Environment variable management

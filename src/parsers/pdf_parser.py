@@ -299,6 +299,11 @@ class PDFParser(BaseParser):
         # Word count
         word_count = self._count_words(text)
 
+        # Extract title from metadata or IMRAD sections
+        title = metadata.get("title", "")
+        if not title and imrad_sections and "title" in imrad_sections:
+            title = imrad_sections["title"]
+
         parse_time = time.time() - start_time
 
         return ParsedDocument(
@@ -309,7 +314,8 @@ class PDFParser(BaseParser):
             page_count=page_count,
             parse_time=parse_time,
             imrad_sections=imrad_sections,
-            _spacy_doc=spacy_doc  # Private: full spaCy Doc object
+            _spacy_doc=spacy_doc,  # Private: full spaCy Doc object
+            title=title
         )
 
     def supports_format(self, file_extension: str) -> bool:

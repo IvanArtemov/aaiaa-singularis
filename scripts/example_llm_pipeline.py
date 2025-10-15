@@ -64,9 +64,8 @@ def main():
 
     try:
         result = pipeline.extract(
-            paper_text=parsed_doc.text,
-            paper_id="copd_bronchial_2025",
-            metadata=parsed_doc.metadata
+            parsed_doc=parsed_doc,
+            paper_id="copd_bronchial_2025"
         )
 
         print(f"\n✅ Extraction completed!")

@@ -6,6 +6,7 @@ import time
 import uuid
 
 from src.models import ExtractionResult, PipelineMetrics
+from src.parsers.base_parser import ParsedDocument
 
 
 class BasePipeline(ABC):
@@ -28,20 +29,19 @@ class BasePipeline(ABC):
         self.last_metrics = None
 
     @abstractmethod
-    def extract(self, paper_text: str, paper_id: str, metadata: Optional[Dict[str, Any]] = None) -> ExtractionResult:
+    def extract(self, parsed_doc: ParsedDocument, paper_id: str) -> ExtractionResult:
         """
-        Extract entities and relationships from paper text
+        Extract entities and relationships from parsed document
 
         Args:
-            paper_text: Full text of the scientific paper
+            parsed_doc: ParsedDocument with text, sections, and metadata
             paper_id: Unique identifier for the paper
-            metadata: Optional metadata about the paper (title, authors, etc.)
 
         Returns:
             ExtractionResult with extracted entities, relationships, and metrics
 
         Raises:
-            ValueError: If paper_text is empty or invalid
+            ValueError: If parsed_doc is invalid
         """
         pass
 
@@ -93,21 +93,24 @@ class BasePipeline(ABC):
         short_uuid = str(uuid.uuid4())[:8]
         return f"rel_{short_uuid}"
 
-    def _validate_paper_text(self, paper_text: str) -> None:
+    def _validate_parsed_doc(self, parsed_doc: ParsedDocument) -> None:
         """
-        Validate paper text
+        Validate parsed document
 
         Args:
-            paper_text: Text to validate
+            parsed_doc: Document to validate
 
         Raises:
-            ValueError: If text is invalid
+            ValueError: If document is invalid
         """
-        if not paper_text or not paper_text.strip():
-            raise ValueError("Paper text cannot be empty")
+        if not parsed_doc:
+            raise ValueError("Parsed document cannot be None")
 
-        if len(paper_text) < 100:
-            raise ValueError("Paper text too short (minimum 100 characters)")
+        if not parsed_doc.text or not parsed_doc.text.strip():
+            raise ValueError("Parsed document text cannot be empty")
+
+        if len(parsed_doc.text) < 100:
+            raise ValueError("Parsed document text too short (minimum 100 characters)")
 
     def get_last_metrics(self) -> Optional[PipelineMetrics]:
         """

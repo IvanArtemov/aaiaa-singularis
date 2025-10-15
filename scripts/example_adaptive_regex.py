@@ -11,14 +11,13 @@ from src.parsers import PDFParser
 from src.config.settings import settings
 
 
-def run_adaptive_pipeline(paper_text: str, paper_id: str, metadata: dict = None):
+def run_adaptive_pipeline(parsed_doc, paper_id: str):
     """
     Run Adaptive Token Pipeline and display results
 
     Args:
-        paper_text: Full text of the paper
+        parsed_doc: ParsedDocument from parser
         paper_id: Paper identifier
-        metadata: Paper metadata
     """
     # Initialize pipeline with settings
     provider_config = settings.get_provider_config()
@@ -32,9 +31,8 @@ def run_adaptive_pipeline(paper_text: str, paper_id: str, metadata: dict = None)
 
     # Run extraction
     result = pipeline.extract(
-        paper_text=paper_text,
-        paper_id=paper_id,
-        metadata=metadata
+        parsed_doc=parsed_doc,
+        paper_id=paper_id
     )
 
     # ========== DISPLAY RESULTS ==========
@@ -173,9 +171,8 @@ def main():
 
     # Run pipeline
     run_adaptive_pipeline(
-        paper_text=parsed_doc.text,
-        paper_id=sample_pdf.stem,
-        metadata={"title": parsed_doc.metadata.get("title", "Unknown")}
+        parsed_doc=parsed_doc,
+        paper_id=sample_pdf.stem
     )
 
     print("\n✅ Demo completed!")

@@ -11,6 +11,7 @@ pytest-cov>=4.1.0
 # PDF Parsing
 PyMuPDF>=1.23.0        # PDF text extraction
 pdfplumber>=0.10.0     # PDF table extraction (optional)
+grobid-client-python>=0.0.17  # GROBID client for structured extraction
 OpenAI>=2.3.0
 
 # Telegram Bot
