@@ -43,7 +43,6 @@ class HybridPipeline(BasePipeline):
     def __init__(
         self,
         config: Dict[str, Any],
-        use_llm_fallback: bool = True,
         confidence_threshold: float = 0.75,
         llm_provider: str = "openai",
         llm_model: str = "gpt-5-mini"
@@ -53,14 +52,12 @@ class HybridPipeline(BasePipeline):
 
         Args:
             config: Configuration dictionary
-            use_llm_fallback: Whether to use LLM for low-confidence cases
             confidence_threshold: Threshold for using LLM fallback
             llm_provider: LLM provider for fallback
             llm_model: LLM model for fallback
         """
         super().__init__(config)
 
-        self.use_llm_fallback = use_llm_fallback
         self.confidence_threshold = confidence_threshold
         self.llm_provider = llm_provider
         self.llm_model = llm_model
@@ -93,11 +90,6 @@ class HybridPipeline(BasePipeline):
 
         # Selective LLM extractor (lazy initialization)
         self.llm_extractor = None
-        if use_llm_fallback:
-            self.llm_extractor = SelectiveLLMExtractor(
-                provider=llm_provider,
-                model=llm_model
-            )
 
     def extract(
         self,
@@ -190,52 +182,6 @@ class HybridPipeline(BasePipeline):
 
         # ========== PHASE 3: Selective LLM Fallback (~$0.01-0.02) ==========
 
-        if self.use_llm_fallback and self.llm_extractor:
-            # Check if we need LLM for hypotheses
-            hyp_count = sum(1 for e in all_entities if e.type == EntityType.HYPOTHESIS)
-            hyp_avg_confidence = (
-                sum(e.confidence for e in all_entities if e.type == EntityType.HYPOTHESIS) / max(hyp_count, 1)
-                if hyp_count > 0 else 0
-            )
-
-            # Use LLM if confidence is low or no hypotheses found
-            if intro_text and (hyp_avg_confidence < self.confidence_threshold or hyp_count == 0):
-                try:
-                    llm_hyp_entities = self.llm_extractor.extract(
-                        intro_text,
-                        EntityType.HYPOTHESIS,
-                        section_name="introduction"
-                    )
-                    all_entities.extend(llm_hyp_entities)
-                    extraction_methods["llm_hypothesis"] += len(llm_hyp_entities)
-                except Exception as e:
-                    print(f"Warning: LLM hypothesis extraction failed: {e}")
-
-            # Extract conclusions from Discussion/Conclusion
-            discussion_text = parsed_doc.get_section("discussion") or ""
-            conclusion_text = parsed_doc.get_section("conclusion") or ""
-            combined_conclusion_text = (discussion_text + "\n\n" + conclusion_text).strip()
-
-            if combined_conclusion_text:
-                try:
-                    conclusion_entities = self.llm_extractor.extract(
-                        combined_conclusion_text,
-                        EntityType.CONCLUSION,
-                        section_name="discussion/conclusion"
-                    )
-                    all_entities.extend(conclusion_entities)
-                    extraction_methods["llm_conclusions"] += len(conclusion_entities)
-                except Exception as e:
-                    print(f"Warning: LLM conclusion extraction failed: {e}")
-
-            # Get LLM metrics
-            if self.llm_extractor:
-                llm_metrics = self.llm_extractor.get_metrics()
-                total_tokens = llm_metrics["total_tokens"]
-                total_cost = llm_metrics["total_cost_usd"]
-
-        # ========== PHASE 4: Build Relationships ==========
-
         relationships = self._build_relationships(all_entities)
 
         # ========== Group entities by type ==========
@@ -255,7 +201,6 @@ class HybridPipeline(BasePipeline):
             metadata={
                 "pipeline": "hybrid",
                 "extraction_methods": dict(extraction_methods),
-                "llm_fallback_used": self.use_llm_fallback and total_cost > 0,
                 "sections_processed": list(parsed_doc.imrad_sections.keys()) if parsed_doc.imrad_sections else []
             }
         )
@@ -365,15 +310,5 @@ class HybridPipeline(BasePipeline):
         return (
             f"Hybrid Pipeline (Pattern + NLP + Selective LLM). "
             f"Cost-optimized approach. "
-            f"Estimated cost: ${self.get_estimated_cost():.4f}/paper"
         )
 
-    def get_estimated_cost(self) -> float:
-        """Get estimated cost per paper"""
-        # Pattern extraction: $0.00
-        # NLP extraction: ~$0.001
-        # Selective LLM: ~$0.01-0.015
-        if self.use_llm_fallback:
-            return 0.02  # Target cost with LLM
-        else:
-            return 0.001  # Pattern + NLP only

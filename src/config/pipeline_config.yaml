@@ -2,8 +2,6 @@
 
 # Hybrid Pipeline Settings
 hybrid_pipeline:
-  # Enable LLM fallback for low-confidence cases
-  use_llm_fallback: false
 
   # Confidence threshold for triggering LLM fallback
   # If pattern/NLP extraction confidence < this, use LLM

@@ -40,14 +40,12 @@ def main():
     print("Initializing Hybrid Pipeline...")
     pipeline = HybridPipeline(
         config=config,
-        use_llm_fallback=config.get('use_llm_fallback', True),
         confidence_threshold=config.get('confidence_threshold', 0.75),
         llm_provider=config.get('llm_provider', 'openai'),
         llm_model=config.get('llm_model', 'gpt-5-mini')
     )
 
     print(f"Pipeline: {pipeline.get_description()}")
-    print(f"Estimated cost: ${pipeline.get_estimated_cost():.4f} per paper")
     print()
 
     # Example 1: Extract from PDF file

@@ -55,16 +55,6 @@ class BasePipeline(ABC):
         """
         pass
 
-    @abstractmethod
-    def get_estimated_cost(self) -> float:
-        """
-        Get estimated cost per paper in USD
-
-        Returns:
-            Estimated cost per paper
-        """
-        pass
-
     @property
     def version(self) -> str:
         """Pipeline version"""
