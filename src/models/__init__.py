@@ -4,7 +4,10 @@ from .entities import (
     Entity,
     Relationship,
     EntityType,
-    RelationshipType
+    RelationshipType,
+    EntitySchema,
+    ENTITY_SCHEMAS,
+    get_entity_schema
 )
 
 from .results import (
@@ -22,6 +25,9 @@ __all__ = [
     "Relationship",
     "EntityType",
     "RelationshipType",
+    "EntitySchema",
+    "ENTITY_SCHEMAS",
+    "get_entity_schema",
 
     # Results
     "ExtractionResult",

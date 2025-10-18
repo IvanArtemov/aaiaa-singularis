@@ -147,7 +147,7 @@ docker pull lfoppiano/grobid:0.8.0
 docker run --rm -p 8070:8070 lfoppiano/grobid:0.8.0
 
 # Verify service is running
-curl http://localhost:8070/api/isalive
+curl https://lfoppiano-grobid.hf.space/api/isalive
 ```
 
 ---

@@ -78,7 +78,7 @@ class GrobidParser(BaseParser):
         config = self._load_config()
 
         # Use parameters if provided, otherwise use config values
-        self.grobid_server = grobid_server or config.get("grobid_server", "http://localhost:8070")
+        self.grobid_server = grobid_server or config.get("grobid_server", "https://lfoppiano-grobid.hf.space")
         self.timeout = timeout or config.get("timeout", 120)
 
         # Initialize GROBID client
@@ -120,7 +120,7 @@ class GrobidParser(BaseParser):
 
         # Return defaults if config file not found
         return {
-            "grobid_server": "http://localhost:8070",
+            "grobid_server": "https://lfoppiano-grobid.hf.space",
             "timeout": 120,
             "consolidate_header": True,
             "consolidate_citations": False,

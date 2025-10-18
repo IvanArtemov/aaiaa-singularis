@@ -25,6 +25,10 @@ spacy>=3.7.0  # NLP library (run: python -m spacy download en_core_web_sm)
 # Vector operations for embeddings
 numpy>=1.24.0
 
+# Vector database and caching for Entity-Centric Pipeline
+chromadb>=0.4.22
+diskcache>=5.6.3
+
 # Future dependencies for full pipeline
 # chromadb>=0.4.0  # Vector database
 # streamlit>=1.28.0  # UI

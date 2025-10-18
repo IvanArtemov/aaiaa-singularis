@@ -3,7 +3,6 @@
 # GROBID server URL
 # Options:
 #   - HuggingFace Space: https://lfoppiano-grobid.hf.space (free, online, recommended)
-#   - Local Docker: http://localhost:8070
 grobid_server: "https://lfoppiano-grobid.hf.space"
 
 # Request timeout (seconds)

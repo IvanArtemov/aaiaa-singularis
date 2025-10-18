@@ -195,7 +195,7 @@ Return ONLY a JSON array of strings:
 
 Keywords should be:
 - Specific to this paper's domain and topic
-- 1-4 words each
+- 3-6 words each
 - Useful for pattern matching
 - Domain-specific terminology when applicable"""
 
