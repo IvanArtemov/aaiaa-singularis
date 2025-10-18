@@ -88,8 +88,14 @@ pytest --cov=src --cov-report=html
 ### Running Examples
 
 ```bash
-# Test LLM adapters (OpenAI/Ollama)
+# Test LLM adapters (OpenAI/Ollama/Nebius)
 python scripts/example_adapters.py
+
+# Test Nebius adapter specifically
+python scripts/example_nebius_adapter.py
+
+# Test LLM adapter logging
+python scripts/test_logging.py
 
 # Test PubMed fetcher
 python scripts/example_fetchers.py
@@ -124,10 +130,43 @@ python scripts/generate_svg.py results/sample_result.json
 
 ### Configuration
 
-**Switch LLM Provider (OpenAI ↔ Ollama):**
+**Switch LLM Provider:**
 Edit `src/config/llm_config.yaml`:
 ```yaml
-active_provider: "openai"  # or "ollama"
+active_provider: "openai"  # or "nebius" or "ollama"
+```
+
+**Supported providers:**
+- **openai** - OpenAI API (gpt-5-mini, text-embedding-3-small)
+  - Requires: `OPENAI_API_KEY` environment variable
+  - Cost: $0.15/$0.60 per 1M tokens (chat), $0.02 per 1M tokens (embeddings)
+
+- **nebius** - Nebius AI Studio (OpenAI-compatible API)
+  - Requires: `NEBIUS_API_KEY` environment variable
+  - Models: openai/gpt-oss-120b (chat), BAAI/bge-en-icl (embeddings)
+  - Cost: $0.15/$0.60 per 1M tokens (chat), $0.01 per 1M tokens (embeddings)
+  - Get API key from: https://studio.nebius.com/
+
+- **ollama** - Local Ollama server (FREE)
+  - No API key required
+  - Models: llama3.1:8b (chat), bge-m3 (embeddings)
+  - Requires: Local Ollama installation
+
+**LLM Request Logging:**
+All LLM adapters support detailed request/response logging:
+- **Chat completion:** Logs full prompts and responses with token counts and costs
+- **Embeddings:** Logs number of texts + first 50 characters of each
+- **Streaming:** Logs prompts and accumulated responses
+
+Enable logging in `src/config/llm_config.yaml`:
+```yaml
+general:
+  log_requests: true  # Set to false to disable
+```
+
+Test logging with:
+```bash
+python scripts/test_logging.py
 ```
 
 **PubMed API Key (optional but recommended):**
@@ -228,6 +267,7 @@ Input → Parser → Pipeline → Extractor → Model → Validator → Output
 **Factory-based LLM abstraction:**
 - `base_adapter.py` - Abstract interface
 - `openai_adapter.py` - OpenAI/ChatGPT implementation
+- `nebius_adapter.py` - Nebius AI Studio implementation (OpenAI-compatible)
 - `ollama_adapter.py` - Local Ollama implementation
 - `factory.py` - `get_llm_adapter(provider)` factory function
 
@@ -235,7 +275,7 @@ Input → Parser → Pipeline → Extractor → Model → Validator → Output
 ```python
 from src.llm_adapters import get_llm_adapter
 
-llm = get_llm_adapter("openai")  # or "ollama"
+llm = get_llm_adapter("openai")  # or "nebius" or "ollama"
 result = llm.generate(prompt="...", system_prompt="...")
 embeddings = llm.embed(["text1", "text2"])
 ```

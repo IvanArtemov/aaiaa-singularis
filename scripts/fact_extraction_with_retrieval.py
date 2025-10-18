@@ -179,8 +179,8 @@ def main():
     print()
 
     keyword_generator = EntityKeywordGenerator(
-        llm_provider="openai",
-        llm_model="gpt-5-mini",
+        llm_provider="nebius",
+        llm_model="openai/gpt-oss-120b",
         cache_size=128
     )
 

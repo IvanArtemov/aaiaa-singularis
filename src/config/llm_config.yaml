@@ -1,7 +1,7 @@
 # LLM Provider Configuration
 # Switch providers by changing active_provider
 
-# Active provider: "openai" or "ollama"
+# Active provider: "openai", "nebius", or "ollama"
 active_provider: "openai"
 
 # ==================== OpenAI / ChatGPT ====================
@@ -24,6 +24,27 @@ openai:
     chat_input: 0.15
     chat_output: 0.60
     embeddings: 0.02
+
+# ==================== Nebius AI Studio ====================
+nebius:
+  api_key_env: "NEBIUS_API_KEY"
+  base_url: "https://api.studio.nebius.com/v1/"
+
+  # Models
+  models:
+    chat: "openai/gpt-oss-120b"
+    embeddings: "BAAI/bge-en-icl"
+
+  # Parameters
+  temperature: 0.1
+  max_tokens: 2000
+  timeout: 30
+
+  # Costs ($/1M tokens)
+  costs:
+    chat_input: 0.15
+    chat_output: 0.60
+    embeddings: 0.01
 
 # ==================== Ollama (Local) ====================
 ollama:

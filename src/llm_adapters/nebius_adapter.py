@@ -1,27 +1,30 @@
-"""OpenAI adapter using official OpenAI SDK"""
+"""Nebius AI Studio adapter using OpenAI-compatible API"""
 
 from openai import OpenAI
 from typing import List, Dict, Any, Optional
 from .base_adapter import BaseLLMAdapter
 
 
-class OpenAIAdapter(BaseLLMAdapter):
-    """Adapter for OpenAI API using official SDK"""
+class NebiusAdapter(BaseLLMAdapter):
+    """Adapter for Nebius AI Studio API using OpenAI-compatible SDK"""
 
     def __init__(self, config: Dict[str, Any], api_key: str):
         super().__init__(config)
-        self.client = OpenAI(api_key=api_key)
+        self.client = OpenAI(
+            base_url="https://api.studio.nebius.com/v1/",
+            api_key=api_key
+        )
         self.chat_model = config["models"]["chat"]
         self.embedding_model = config["models"]["embeddings"]
 
     def generate(
-        self,
-        prompt: str,
-        system_prompt: Optional[str] = None,
-        temperature: Optional[float] = None,
-        max_tokens: Optional[int] = None
+            self,
+            prompt: str,
+            system_prompt: Optional[str] = None,
+            temperature: Optional[float] = None,
+            max_tokens: Optional[int] = None
     ) -> Dict[str, Any]:
-        """Generate text via OpenAI Chat Completions API"""
+        """Generate text via Nebius Chat Completions API"""
 
         messages = []
         if system_prompt:
@@ -30,7 +33,7 @@ class OpenAIAdapter(BaseLLMAdapter):
 
         # Log request
         if self.log_requests:
-            self.logger.info(f"OpenAI Chat Request - Model: {self.chat_model}")
+            self.logger.info(f"Nebius Chat Request - Model: {self.chat_model}")
             if system_prompt:
                 self.logger.info(f"System prompt: {system_prompt}")
             self.logger.info(f"User prompt: {prompt}")
@@ -38,6 +41,10 @@ class OpenAIAdapter(BaseLLMAdapter):
         response = self.client.chat.completions.create(
             model=self.chat_model,
             messages=messages,
+            temperature=temperature or self.temperature,
+            max_tokens=max_tokens or self.config.get("max_tokens", 2000),
+            extra_body={"reasoning_enabled": False},
+            reasoning_effort="low"
         )
 
         # Extract data
@@ -51,7 +58,7 @@ class OpenAIAdapter(BaseLLMAdapter):
         # Log response
         if self.log_requests:
             self.logger.info(
-                f"OpenAI Chat Response - Tokens: {usage.prompt_tokens}/{usage.completion_tokens}, "
+                f"Nebius Chat Response - Tokens: {usage.prompt_tokens}/{usage.completion_tokens}, "
                 f"Cost: ${cost:.6f}"
             )
             self.logger.info(f"Response: {content}")
@@ -66,11 +73,11 @@ class OpenAIAdapter(BaseLLMAdapter):
         }
 
     def embed(self, texts: List[str]) -> List[List[float]]:
-        """Create embeddings via OpenAI Embeddings API"""
+        """Create embeddings via Nebius Embeddings API"""
 
         # Log request
         if self.log_requests:
-            self.logger.info(f"OpenAI Embeddings Request - Model: {self.embedding_model}, Texts: {len(texts)}")
+            self.logger.info(f"Nebius Embeddings Request - Model: {self.embedding_model}, Texts: {len(texts)}")
             for i, text in enumerate(texts[:5], 1):  # Log first 5
                 preview = text[:50] + "..." if len(text) > 50 else text
                 self.logger.info(f"  [{i}] {preview}")
@@ -87,9 +94,9 @@ class OpenAIAdapter(BaseLLMAdapter):
         return embeddings
 
     def stream_generate(
-        self,
-        prompt: str,
-        system_prompt: Optional[str] = None
+            self,
+            prompt: str,
+            system_prompt: Optional[str] = None
     ):
         """Stream text generation"""
 
@@ -100,7 +107,7 @@ class OpenAIAdapter(BaseLLMAdapter):
 
         # Log request
         if self.log_requests:
-            self.logger.info(f"OpenAI Stream Request - Model: {self.chat_model}")
+            self.logger.info(f"Nebius Stream Request - Model: {self.chat_model}")
             if system_prompt:
                 self.logger.info(f"System prompt: {system_prompt}")
             self.logger.info(f"User prompt: {prompt}")
@@ -123,4 +130,4 @@ class OpenAIAdapter(BaseLLMAdapter):
         # Log accumulated response
         if self.log_requests and accumulated_response:
             full_response = "".join(accumulated_response)
-            self.logger.info(f"OpenAI Stream Response: {full_response}")
+            self.logger.info(f"Nebius Stream Response: {full_response}")
