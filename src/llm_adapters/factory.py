@@ -2,8 +2,6 @@
 
 from typing import Optional
 from .base_adapter import BaseLLMAdapter
-from .openai_adapter import OpenAIAdapter
-from .ollama_adapter import OllamaAdapter
 from .nebius_adapter import NebiusAdapter
 from ..config.settings import settings
 
@@ -17,7 +15,7 @@ class AdapterFactory:
         Create adapter for specified provider
 
         Args:
-            provider: "openai" or "ollama" (if None, uses config default)
+            provider: "nebius" (if None, uses config default)
 
         Returns:
             BaseLLMAdapter: Ready-to-use adapter
@@ -28,23 +26,14 @@ class AdapterFactory:
         provider = provider or settings.active_provider
         config = settings.get_provider_config(provider)
 
-        if provider == "openai":
-            api_key = settings.get_api_key("openai")
-            if not api_key:
-                raise ValueError("OpenAI API key not found. Set OPENAI_API_KEY environment variable.")
-            return OpenAIAdapter(config, api_key)
-
-        elif provider == "nebius":
+        if provider == "nebius":
             api_key = settings.get_api_key("nebius")
             if not api_key:
                 raise ValueError("Nebius API key not found. Set NEBIUS_API_KEY environment variable.")
             return NebiusAdapter(config, api_key)
 
-        elif provider == "ollama":
-            return OllamaAdapter(config)
-
         else:
-            raise ValueError(f"Unknown provider: {provider}. Supported: openai, nebius, ollama")
+            raise ValueError(f"Unknown provider: {provider}. Only 'nebius' is supported.")
 
 
 def get_llm_adapter(provider: Optional[str] = None) -> BaseLLMAdapter:
@@ -52,14 +41,14 @@ def get_llm_adapter(provider: Optional[str] = None) -> BaseLLMAdapter:
     Create and return LLM adapter
 
     Args:
-        provider: "openai", "nebius", or "ollama" (if None, uses config default)
+        provider: "nebius" (if None, uses config default)
 
     Returns:
-        BaseLLMAdapter: Ready-to-use adapter
+        BaseLLMAdapter: Ready-to-use Nebius adapter
 
     Example:
         >>> from llm_adapters import get_llm_adapter
-        >>> llm = get_llm_adapter()  # Uses active_provider from config
+        >>> llm = get_llm_adapter()  # Uses Nebius by default
         >>> result = llm.generate("Extract facts from...")
         >>> print(result["content"])
     """

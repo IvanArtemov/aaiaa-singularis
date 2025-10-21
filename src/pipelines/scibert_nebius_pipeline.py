@@ -3,19 +3,15 @@
 import time
 import yaml
 from pathlib import Path
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, Optional
 from collections import defaultdict
 
 from .base_pipeline import BasePipeline
 from src.models import (
-    Entity,
-    Relationship,
     EntityType,
-    RelationshipType,
     ExtractionResult,
     PipelineMetrics,
     ENTITY_SCHEMAS,
-    get_entity_schema
 )
 from src.parsers import ParsedDocument
 from src.extractors import EntityKeywordGenerator, SentenceEmbedder

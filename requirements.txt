@@ -2,18 +2,11 @@
 requests>=2.31.0
 python-dotenv>=1.0.0
 pyyaml>=6.0.1
-arxiv>=2.1.0
-httpx>=0.25.0  # Async HTTP client for MinerU API
-
-# Testing
-pytest>=7.4.0
-pytest-cov>=4.1.0
 
 # PDF Parsing
-PyMuPDF>=1.23.0        # PDF text extraction
-pdfplumber>=0.10.0     # PDF table extraction (optional)
+PyMuPDF>=1.23.0        # Minimal dependency for GROBID if needed
 grobid-client-python>=0.0.17  # GROBID client for structured extraction
-OpenAI>=2.3.0
+OpenAI>=2.3.0  # OpenAI SDK (used by Nebius adapter)
 
 # Telegram Bot
 python-telegram-bot>=20.0  # Telegram Bot API
