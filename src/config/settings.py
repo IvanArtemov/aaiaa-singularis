@@ -15,7 +15,8 @@ class Settings:
     def __init__(
         self,
         llm_config_path: str = "src/config/llm_config.yaml",
-        fetcher_config_path: str = "src/config/fetcher_config.yaml"
+        fetcher_config_path: str = "src/config/fetcher_config.yaml",
+        embedding_config_path: str = "src/config/embedding_config.yaml"
     ):
         # Get project root from environment or auto-detect
         project_root = os.getenv("PROJECT_ROOT")
@@ -28,9 +29,11 @@ class Settings:
         # Build absolute paths
         self.llm_config_path = self.project_root / llm_config_path
         self.fetcher_config_path = self.project_root / fetcher_config_path
+        self.embedding_config_path = self.project_root / embedding_config_path
 
         self._config = self._load_config(self.llm_config_path)
         self._fetcher_config = self._load_config(self.fetcher_config_path) if self.fetcher_config_path.exists() else {}
+        self._embedding_config = self._load_config(self.embedding_config_path) if self.embedding_config_path.exists() else {}
         self._validate_config()
 
     def _load_config(self, config_path: Path) -> Dict[str, Any]:
@@ -118,6 +121,22 @@ class Settings:
         fetcher = fetcher or self.active_fetcher
         config = self.get_fetcher_config(fetcher)
         return config.get("base_url", "")
+
+    # ==================== Embedding methods ====================
+
+    @property
+    def active_embedding_provider(self) -> str:
+        """Get active embedding provider"""
+        return self._embedding_config.get("active_provider", "scibert")
+
+    def get_embedding_config(self, provider: Optional[str] = None) -> Dict[str, Any]:
+        """Get embedding provider configuration"""
+        provider = provider or self.active_embedding_provider
+        return self._embedding_config.get(provider, {})
+
+    def get_embedding_general_config(self) -> Dict[str, Any]:
+        """Get general embedding settings"""
+        return self._embedding_config.get("general", {})
 
 
 # Global instance

@@ -380,6 +380,10 @@ class GrobidParser(BaseParser):
         GROBID structures documents using <div> elements with <head> tags.
         Format: <div><head>Introduction</head><p>...</p></div>
 
+        Some documents have hierarchical structure where major sections
+        (Results, Methods, Discussion) are empty headers followed by
+        multiple subsection divs at the same level.
+
         Args:
             root: TEI XML root element
 
@@ -393,8 +397,21 @@ class GrobidParser(BaseParser):
         if body is None:
             return sections
 
+        # Define major IMRAD sections that might have subsections
+        major_sections = {"results", "methods", "discussion", "introduction", "conclusion"}
+
+        # Get all div elements
+        divs = body.findall(f"{self.TEI_NS}div")
+
+        # Track processed divs to avoid duplicates
+        processed_indices = set()
+
         # Extract sections from <div> elements with <head>
-        for div in body.findall(f"{self.TEI_NS}div"):
+        for i, div in enumerate(divs):
+            # Skip if already processed as subsection
+            if i in processed_indices:
+                continue
+
             # Look for <head> element inside <div>
             head_elem = div.find(f"{self.TEI_NS}head")
             if head_elem is None:
@@ -410,11 +427,40 @@ class GrobidParser(BaseParser):
             # Extract text content (excluding head)
             section_text = self._get_div_content_without_head(div)
 
-            # Merge if section already exists (e.g., multiple Methods subsections)
-            if section_name in sections:
-                sections[section_name] += "\n\n" + section_text
-            else:
-                sections[section_name] = section_text
+            # Check if this is a major section header without content
+            if section_title.strip().lower() in major_sections and not section_text.strip():
+                # This is an empty section header - collect subsections
+                subsection_texts = []
+
+                # Look ahead for subsections until next major section
+                for j in range(i + 1, len(divs)):
+                    subsection_div = divs[j]
+                    subsection_head = subsection_div.find(f"{self.TEI_NS}head")
+
+                    if subsection_head is not None:
+                        subsection_title = self._get_text(subsection_head)
+
+                        # Stop if we hit another major section
+                        if subsection_title.strip().lower() in major_sections:
+                            break
+
+                        # Collect this subsection
+                        subsection_text = self._get_div_content_without_head(subsection_div)
+                        if subsection_text.strip():
+                            subsection_texts.append(subsection_text)
+
+                        # Mark as processed
+                        processed_indices.add(j)
+
+                # Combine all subsection texts
+                section_text = "\n\n".join(subsection_texts)
+
+            # Add to sections (merge if already exists)
+            if section_text.strip():
+                if section_name in sections:
+                    sections[section_name] += "\n\n" + section_text
+                else:
+                    sections[section_name] = section_text
 
         # Extract abstract from teiHeader if not in body
         if "abstract" not in sections:

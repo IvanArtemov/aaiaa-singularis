@@ -1,0 +1,95 @@
+# SciBERT-Nebius Hybrid Extraction Pipeline Configuration
+
+scibert_nebius_pipeline:
+  # Document segmentation settings
+  segmentation:
+    mode: "sentence"  # "sentence" or "paragraph"
+    min_length: 10    # Minimum segment length in characters
+    use_spacy: true   # Use spaCy for sentence detection
+
+  # Embedding generation settings (using SciBERT for FREE local embeddings)
+  embedding:
+    provider: "scibert"  # SciBERT embedding adapter
+    batch_size: 32       # Number of sentences to embed per batch
+    cache_enabled: true
+    cache_size: 256      # LRU cache size for duplicate sentences
+
+  # LLM-driven keyword generation (using Nebius)
+  keyword_generation:
+    model: "openai/gpt-oss-120b"  # Nebius model
+    temperature: 0.3
+    max_tokens: 1500
+    max_keywords_per_type: 15
+    cache_enabled: true
+    cache_size: 128
+
+  # Semantic retrieval (vector search with SciBERT embeddings)
+  semantic_retrieval:
+    collection_name: "scibert_segments"
+    persist_directory: "./chroma_db_scibert"
+    distance_metric: "cosine"  # "cosine", "l2", or "ip"
+
+    # Adaptive top-k per entity type
+    top_k_default: 20
+    top_k_per_type:
+      FACT: 10          # Many facts, lower top-k
+      HYPOTHESIS: 30    # Rare, higher top-k
+      EXPERIMENT: 20
+      TECHNIQUE: 15
+      RESULT: 15
+      DATASET: 10
+      ANALYSIS: 15
+      CONCLUSION: 20
+
+    # Section filtering
+    section_filtering: true
+    sections_by_type:
+      FACT: ["introduction", "abstract", "discussion"]
+      HYPOTHESIS: ["introduction", "abstract"]
+      EXPERIMENT: ["methods", "materials"]
+      TECHNIQUE: ["methods", "materials"]
+      RESULT: ["results", "discussion"]
+      DATASET: ["methods", "materials", "results"]
+      ANALYSIS: ["methods", "results"]
+      CONCLUSION: ["conclusion", "discussion", "abstract"]
+
+  # LLM validation settings (using Nebius)
+  validation:
+    model: "openai/gpt-oss-120b"  # Nebius model
+    temperature: 0.1  # Low temperature for consistency
+    max_tokens: 2500  # Increased for longer validation responses
+    batch_size: 5     # Reduced for reliability (avoid JSON truncation)
+    parallel_types: true  # Validate entity types in parallel
+    max_workers: 4    # Number of parallel threads
+
+    # Confidence thresholds per entity type
+    confidence_threshold:
+      FACT: 0.7
+      HYPOTHESIS: 0.7
+      EXPERIMENT: 0.7
+      TECHNIQUE: 0.7
+      RESULT: 0.7
+      DATASET: 0.7
+      ANALYSIS: 0.7
+      CONCLUSION: 0.7
+
+  # Graph assembly settings
+  graph_assembly:
+    proximity_window: 3  # Sentence proximity for relationships
+    use_llm_refinement: false  # Optional LLM for relationship refinement
+    min_relationship_confidence: 0.6
+
+    # Relationship strength modifiers
+    relationship_modifiers:
+      same_section: 1.0
+      adjacent_section: 0.8
+      text_overlap_high: 0.9  # > 20% keyword overlap
+      text_overlap_medium: 0.75  # 10-20% overlap
+      text_overlap_low: 0.6   # < 10% overlap
+
+  # Cost optimization
+  cost_optimization:
+    use_embedding_cache: true
+    use_keyword_cache: true
+    use_validation_cache: false  # Disabled for accuracy
+    max_cache_ttl: 86400  # 24 hours

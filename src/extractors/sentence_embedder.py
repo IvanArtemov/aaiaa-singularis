@@ -24,6 +24,8 @@ class SentenceEmbedder:
     def __init__(
         self,
         llm_provider: str = "ollama",
+        embedding_provider: Optional[str] = None,
+        use_embedding_adapter: bool = False,
         batch_size: int = 100,
         min_sentence_length: int = 10,
         cache_size: int = 256
@@ -33,11 +35,15 @@ class SentenceEmbedder:
 
         Args:
             llm_provider: LLM provider for embeddings ("openai" or "ollama")
+            embedding_provider: Embedding provider ("scibert", etc.) - used when use_embedding_adapter=True
+            use_embedding_adapter: Use embedding_adapter instead of llm_adapter (for SciBERT, etc.)
             batch_size: Number of sentences to embed in one API call
             min_sentence_length: Minimum sentence length to include (chars)
             cache_size: Size of LRU cache for duplicate sentences
         """
         self.llm_provider = llm_provider
+        self.embedding_provider = embedding_provider or llm_provider
+        self.use_embedding_adapter = use_embedding_adapter
         self.batch_size = batch_size
         self.min_sentence_length = min_sentence_length
         self.cache_size = cache_size
@@ -45,6 +51,7 @@ class SentenceEmbedder:
         # Lazy initialization
         self.nlp = None
         self.llm_adapter = None
+        self.embedding_adapter = None
 
         # Metrics
         self.total_tokens = 0
@@ -74,6 +81,13 @@ class SentenceEmbedder:
         if self.llm_adapter is None:
             self.llm_adapter = get_llm_adapter(self.llm_provider)
         return self.llm_adapter
+
+    def _get_embedding_adapter(self):
+        """Lazy load embedding adapter (SciBERT, etc.)"""
+        if self.embedding_adapter is None:
+            from src.embedding_adapters import get_embedding_adapter
+            self.embedding_adapter = get_embedding_adapter(self.embedding_provider)
+        return self.embedding_adapter
 
     def process_document(
         self,
@@ -165,7 +179,11 @@ class SentenceEmbedder:
         Args:
             sentences: List of Sentence objects
         """
-        llm = self._get_llm_adapter()
+        # Select appropriate adapter
+        if self.use_embedding_adapter:
+            adapter = self._get_embedding_adapter()
+        else:
+            adapter = self._get_llm_adapter()
 
         start_time = time.time()
 
@@ -188,7 +206,7 @@ class SentenceEmbedder:
 
             # Получить embeddings для не-кэшированных предложений
             if texts_to_embed:
-                new_embeddings = llm.embed(texts_to_embed)
+                new_embeddings = adapter.embed(texts_to_embed)
 
                 # Сохранить в кэш
                 for text, embedding in zip(texts_to_embed, new_embeddings):
@@ -209,8 +227,20 @@ class SentenceEmbedder:
             batch_tokens = sum(len(s.text.split()) * 1.3 for s in batch)
             self.total_tokens += batch_tokens
 
-        # Оценка стоимости (для text-embedding-3-small: $0.02/1M tokens)
-        self.total_cost = (self.total_tokens / 1_000_000) * 0.02
+        # Calculate cost based on adapter type
+        if self.use_embedding_adapter:
+            # For embedding_adapter (e.g., SciBERT) - cost is usually FREE
+            # Get actual cost from adapter metrics if available
+            try:
+                adapter_metrics = adapter.get_metrics()
+                self.total_cost = 0.0  # SciBERT and most local models are FREE
+            except:
+                self.total_cost = 0.0
+        else:
+            # For llm_adapter (OpenAI, Nebius, etc.) - estimate cost
+            # Default: text-embedding-3-small: $0.02/1M tokens
+            self.total_cost = (self.total_tokens / 1_000_000) * 0.02
+
         self.embedding_time = time.time() - start_time
 
     def _get_from_cache(self, text: str) -> Optional[List[float]]:

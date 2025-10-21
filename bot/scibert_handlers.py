@@ -1,11 +1,11 @@
-"""Telegram bot handlers for PDF processing"""
+"""Telegram bot handlers for PDF processing with SciBERT-Nebius pipeline"""
 
 import logging
 from pathlib import Path
 from telegram import Update
 from telegram.ext import ContextTypes
 
-from .config import BotConfig
+from .scibert_config import SciBertBotConfig
 from .session_manager import SessionManager
 from .utils import (
     validate_pdf_file,
@@ -28,25 +28,25 @@ from .exceptions import (
     RateLimitExceededError
 )
 
-from src.parsers import PDFParser
-from src.pipelines import LLMPipeline
+from src.parsers import GrobidParser  # Use GROBID for IMRAD sections
+from src.pipelines import SciBertNebiusPipeline
 from src.visualization.generate_svg import generate_svg_from_json
 
 logger = logging.getLogger(__name__)
 
 
-class BotHandlers:
-    """Telegram bot message handlers"""
+class SciBertBotHandlers:
+    """Telegram bot message handlers using SciBERT-Nebius pipeline"""
 
-    def __init__(self, session_manager: SessionManager, config: BotConfig):
+    def __init__(self, session_manager: SessionManager, config: SciBertBotConfig):
         self.session_manager = session_manager
         self.config = config
-        self.pdf_parser = PDFParser()
+        self.pdf_parser = GrobidParser()  # Use GROBID instead of PyMuPDF
 
     async def start_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Handle /start command"""
         user = update.effective_user
-        logger.info(f"User {user.id} ({user.username}) started bot")
+        logger.info(f"User {user.id} ({user.username}) started SciBERT bot")
 
         await update.message.reply_text(
             self.config.get_welcome_message(),
@@ -65,7 +65,7 @@ class BotHandlers:
         user = update.effective_user
         stats = self.session_manager.get_user_stats(user.id)
 
-        message = f"""📊 Ваша статистика
+        message = f"""📊 Ваша статистика (SciBERT-Nebius Bot)
 
 📈 Всего запросов: {stats['total_requests']}
 💰 Суммарная стоимость: ${stats['total_cost']:.4f}
@@ -74,6 +74,8 @@ class BotHandlers:
 
         if stats['first_request']:
             message += f"\n🕒 Первый запрос: {stats['first_request'][:10]}"
+
+        message += f"\n\n✨ Pipeline: SciBERT + Nebius gpt-oss-120b"
 
         await update.message.reply_text(message)
 
@@ -130,7 +132,7 @@ class BotHandlers:
         document
     ):
         """
-        Process PDF through full pipeline
+        Process PDF through SciBERT-Nebius pipeline
 
         Args:
             update: Telegram update
@@ -170,24 +172,27 @@ class BotHandlers:
             await file.download_to_drive(pdf_path)
             logger.info(f"Downloaded PDF to {pdf_path}")
 
-            # Step 2: Parse PDF
+            # Step 2: Parse PDF with GROBID
             await status_msg.edit_text(
-                get_processing_status_message("parsing")
+                get_processing_status_message("parsing") + "\n(Using GROBID ML parser...)"
             )
 
             try:
                 parsed_doc = self.pdf_parser.parse(str(pdf_path))
-                logger.info(f"Parsed PDF: {parsed_doc.page_count} pages, {parsed_doc.word_count} words")
+                logger.info(
+                    f"Parsed PDF with GROBID: {parsed_doc.word_count} words, "
+                    f"IMRAD sections: {list(parsed_doc.imrad_sections.keys()) if parsed_doc.imrad_sections else 'none'}"
+                )
             except Exception as e:
                 raise PDFParsingError(e)
 
+            # Update status with IMRAD sections info
+            sections_info = ""
+            if parsed_doc.imrad_sections:
+                sections_info = f"\nIMRAD sections: {', '.join(parsed_doc.imrad_sections.keys())}"
+
             await status_msg.edit_text(
-                get_processing_status_message(
-                    "parsing_done",
-                    pages=parsed_doc.page_count,
-                    words=parsed_doc.word_count,
-                    sections=len(parsed_doc.sections)
-                )
+                f"✅ PDF parsed: {parsed_doc.word_count} words{sections_info}"
             )
 
             # Save parsed document if keeping files
@@ -195,19 +200,20 @@ class BotHandlers:
                 save_parsed_document(article_dir, parsed_doc)
                 logger.info(f"Saved parsed document to {article_dir / 'parsed_doc.json'}")
 
-            # Step 3: Extract entities with LLM
+            # Step 3: Extract entities with SciBERT-Nebius pipeline
             await status_msg.edit_text(
-                get_processing_status_message("extracting")
+                "🔬 Extracting entities with SciBERT-Nebius pipeline...\n"
+                "Phase 1: SciBERT embeddings (FREE)\n"
+                "Phase 2: Keyword generation (Nebius)\n"
+                "Phase 3: Semantic retrieval (ChromaDB)\n"
+                "Phase 4: Entity validation (Nebius)"
             )
 
             try:
-                pipeline = LLMPipeline(
-                    config=self.config.LLM_CONFIG,
-                    api_key=self.config.OPENAI_API_KEY,
-                    model=self.config.LLM_MODEL
-                )
+                # Initialize pipeline (config from scibert_nebius_config.yaml)
+                pipeline = SciBertNebiusPipeline()
 
-                paper_id = f"tg_{user.id}_{unique_filename.replace('.pdf', '')}"
+                paper_id = f"tg_scibert_{user.id}_{unique_filename.replace('.pdf', '')}"
 
                 result = pipeline.extract(
                     parsed_doc=parsed_doc,
@@ -215,17 +221,18 @@ class BotHandlers:
                 )
 
                 logger.info(
-                    f"Extraction complete: {result.total_entities()} entities, "
+                    f"SciBERT-Nebius extraction complete: {result.total_entities()} entities, "
                     f"{result.total_relationships()} relationships, "
                     f"cost: ${result.metrics.cost_usd:.4f}"
                 )
 
             except Exception as e:
+                logger.error(f"Extraction error: {e}", exc_info=True)
                 raise ExtractionError(e)
 
             # Step 4: Generate SVG
             await status_msg.edit_text(
-                get_processing_status_message("generating_svg")
+                "🎨 Generating knowledge graph visualization..."
             )
 
             try:
@@ -243,7 +250,7 @@ class BotHandlers:
                 if article_dir:
                     svg_path = article_dir / "knowledge_graph.svg"
                 else:
-                    svg_filename = f"graph_{user.id}_{unique_filename.replace('.pdf', '.svg')}"
+                    svg_filename = f"graph_scibert_{user.id}_{unique_filename.replace('.pdf', '.svg')}"
                     svg_path = self.config.TEMP_DIR / svg_filename
                     temp_paths.append(svg_path)
 
@@ -256,7 +263,7 @@ class BotHandlers:
                         article_dir,
                         user.id,
                         document.file_name,
-                        "llm_pipeline",
+                        "scibert_nebius",
                         result
                     )
                     logger.info(f"Saved metadata to {article_dir / 'metadata.json'}")
@@ -266,16 +273,20 @@ class BotHandlers:
 
             # Step 5: Send results
             await status_msg.edit_text(
-                get_processing_status_message("complete")
+                "✅ Processing complete! Sending results..."
             )
+
+            # Format caption with SciBERT-specific info
+            caption = format_metrics(result)
+            caption += "\n\n✨ Pipeline: SciBERT + Nebius gpt-oss-120b"
 
             # Send SVG file
             with open(svg_path, 'rb') as svg_file:
                 await context.bot.send_document(
                     chat_id=update.effective_chat.id,
                     document=svg_file,
-                    filename=f"knowledge_graph.svg",
-                    caption=format_metrics(result)
+                    filename=f"knowledge_graph_scibert.svg",
+                    caption=caption
                 )
 
             # Update session stats
@@ -285,7 +296,7 @@ class BotHandlers:
                 entities=result.total_entities()
             )
 
-            logger.info(f"Successfully processed PDF for user {user.id}")
+            logger.info(f"Successfully processed PDF for user {user.id} with SciBERT-Nebius pipeline")
 
         except (PDFParsingError, ExtractionError, SVGGenerationError) as e:
             logger.error(f"Processing error: {e}", exc_info=True)
@@ -301,6 +312,8 @@ class BotHandlers:
         """Handle text messages"""
         await update.message.reply_text(
             "📄 Отправьте мне PDF файл научной статьи для анализа.\n\n"
+            "✨ Использую SciBERT embeddings + Nebius LLM\n"
+            "💰 Стоимость: ~$0.018/статья\n\n"
             "Используйте /help для получения инструкций."
         )
 

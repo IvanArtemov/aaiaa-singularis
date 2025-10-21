@@ -1,4 +1,4 @@
-"""Configuration for Telegram Bot"""
+"""Configuration for SciBERT-Nebius Telegram Bot"""
 
 import os
 from pathlib import Path
@@ -8,14 +8,14 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
-class BotConfig:
-    """Telegram Bot configuration"""
+class SciBertBotConfig:
+    """SciBERT-Nebius Telegram Bot configuration"""
 
     # Telegram
     TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 
-    # OpenAI (for LLM pipeline)
-    OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+    # Nebius (for SciBertNebiusPipeline)
+    NEBIUS_API_KEY = os.getenv("NEBIUS_API_KEY")
 
     # File handling
     PROJECT_ROOT = Path(__file__).parent.parent
@@ -27,14 +27,7 @@ class BotConfig:
     MAX_REQUESTS_PER_USER_PER_HOUR = int(os.getenv("MAX_REQUESTS_PER_USER_PER_HOUR", "5"))
 
     # Processing
-    PROCESSING_TIMEOUT_SECONDS = int(os.getenv("PROCESSING_TIMEOUT_SECONDS", "180"))  # 3 minutes
-
-    # LLM Pipeline config
-    LLM_CONFIG = {
-        "temperature": 0.1,
-        "max_tokens": 4000
-    }
-    LLM_MODEL = os.getenv("LLM_MODEL", "gpt-5-mini")
+    PROCESSING_TIMEOUT_SECONDS = int(os.getenv("PROCESSING_TIMEOUT_SECONDS", "300"))  # 5 minutes for SciBERT
 
     # Cleanup
     CLEANUP_TEMP_FILES_OLDER_THAN_HOURS = 1
@@ -45,23 +38,28 @@ class BotConfig:
     ORGANIZE_BY_USER = True  # Create user_{user_id} subdirectories
 
     # Messages
-    WELCOME_MESSAGE = """👋 Привет! Я бот для анализа научных статей.
+    WELCOME_MESSAGE = """👋 Привет! Я бот для анализа научных статей (SciBERT + Nebius).
 
 📄 Отправь мне PDF научной статьи, и я:
 ✓ Извлеку ключевые сущности (факты, гипотезы, результаты)
 ✓ Построю граф знаний
 ✓ Создам красивую SVG визуализацию
 
-⚡ Стоимость: ~$0.03 за статью
-⏱ Время обработки: 30-60 секунд
+⚡ Стоимость: ~$0.018 за статью (дешевле!)
+⏱ Время обработки: 60-90 секунд
 📊 Ограничение: {max_requests} запросов в час
+
+✨ Использует:
+• SciBERT embeddings (FREE, domain-optimized)
+• Nebius gpt-oss-120b (cost-efficient LLM)
+• GROBID parser (ML-based extraction)
 
 Попробуй! Просто отправь PDF файл."""
 
     HELP_MESSAGE = """📖 Инструкция по использованию
 
 1️⃣ Отправь PDF файл научной статьи
-2️⃣ Подожди 30-60 секунд обработки
+2️⃣ Подожди 60-90 секунд обработки
 3️⃣ Получи SVG граф знаний
 
 📏 Ограничения:
@@ -73,6 +71,12 @@ class BotConfig:
 /help - эта справка
 /stats - статистика
 
+💡 Технологии:
+• SciBERT embeddings (FREE)
+• Nebius gpt-oss-120b LLM
+• ChromaDB semantic search
+• GROBID structured parser
+
 ❓ Вопросы? Напиши @your_support"""
 
     @classmethod
@@ -80,8 +84,8 @@ class BotConfig:
         """Validate configuration"""
         if not cls.TELEGRAM_BOT_TOKEN:
             raise ValueError("TELEGRAM_BOT_TOKEN not set in environment")
-        if not cls.OPENAI_API_KEY:
-            raise ValueError("OPENAI_API_KEY not set in environment")
+        if not cls.NEBIUS_API_KEY:
+            raise ValueError("NEBIUS_API_KEY not set in environment. Get it from: https://studio.nebius.com/")
 
         # Ensure temp directory exists
         cls.TEMP_DIR.mkdir(parents=True, exist_ok=True)

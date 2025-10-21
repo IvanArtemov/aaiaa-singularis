@@ -1,0 +1,53 @@
+# Embedding Provider Configuration
+# Switch providers by changing active_provider
+
+# Active provider: "scibert", "openai", "nebius", etc.
+active_provider: "scibert"
+
+# ==================== SciBERT (Local, FREE) ====================
+scibert:
+  # Model from HuggingFace
+  model_name: "allenai/scibert_scivocab_uncased"
+
+  # Embedding parameters
+  embedding_dim: 768  # BERT-base dimension
+  max_length: 512     # Maximum sequence length
+  batch_size: 32      # Batch size for processing
+  normalize: true     # L2 normalize embeddings (recommended for cosine similarity)
+
+  # Device configuration
+  device: "cpu"       # "cpu" or "cuda" (if GPU available)
+
+  # Description
+  description: "Scientific BERT pre-trained on 1.14M research papers"
+  best_for: "Scientific text, research papers, biomedical literature"
+
+  # Cost
+  cost_per_million_tokens: 0.0  # FREE (local execution)
+
+# ==================== OpenAI Embeddings (Future) ====================
+# openai:
+#   api_key_env: "OPENAI_API_KEY"
+#   model_name: "text-embedding-3-small"
+#   embedding_dim: 1536
+#   batch_size: 100
+#   cost_per_million_tokens: 0.02
+
+# ==================== Nebius Embeddings (Future) ====================
+# nebius:
+#   api_key_env: "NEBIUS_API_KEY"
+#   base_url: "https://api.studio.nebius.com/v1/"
+#   model_name: "BAAI/bge-en-icl"
+#   embedding_dim: 768
+#   batch_size: 100
+#   cost_per_million_tokens: 0.01
+
+# ==================== General Settings ====================
+general:
+  # Cache settings
+  enable_cache: true
+  cache_dir: ".cache/embeddings"
+
+  # Performance settings
+  show_progress: false
+  log_requests: true
