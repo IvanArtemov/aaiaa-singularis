@@ -15,8 +15,8 @@ from pathlib import Path
 ENTITY_COLORS = {
     "fact": "#b2ebf2",        # cyan
     "hypothesis": "#ffe082",  # yellow
-    "method": "#f48fb1",   # pink
-    "experiment": "#f48fb1",  # pink (same as technique)
+    "method": "#9fa8da",   # indigo
+    "experiment": "#f48fb1",  # pink
     "result": "#a5d6a7",      # green
     "conclusion": "#b0bec5",  # grey
     "dataset": "#e1bee7",     # light purple
@@ -33,16 +33,16 @@ RELATIONSHIP_COLORS = {
     "related_to": "#9E9E9E"
 }
 
-# Column configuration (X positions)
+# Column configuration (X positions) - 8 separate columns
 COLUMNS = {
-    "fact": {"x": 150, "label": "Facts"},
-    "hypothesis": {"x": 500, "label": "Hypotheses"},
-    "method": {"x": 850, "label": "Methods"},
-    "experiment": {"x": 850, "label": "Methods"},
-    "result": {"x": 1200, "label": "Results"},
-    "conclusion": {"x": 1550, "label": "Conclusions"},
-    "dataset": {"x": 850, "label": "Methods"},
-    "analysis": {"x": 850, "label": "Methods"}
+    "fact": {"x": 150, "label": "Input Facts"},
+    "hypothesis": {"x": 430, "label": "Hypotheses"},
+    "experiment": {"x": 710, "label": "Experiments"},
+    "method": {"x": 990, "label": "Techniques"},
+    "result": {"x": 1270, "label": "Results"},
+    "dataset": {"x": 1550, "label": "Datasets"},
+    "analysis": {"x": 1830, "label": "Analysis"},
+    "conclusion": {"x": 2110, "label": "Conclusions"}
 }
 
 # Layout parameters
@@ -282,8 +282,8 @@ def generate_svg_from_json(result_json_path: str, output_svg_path: str = None) -
 
         max_y = max(max_y, y)
 
-    # Calculate SVG dimensions
-    svg_width = 1762
+    # Calculate SVG dimensions (8 columns layout)
+    svg_width = 2400
     svg_height = max_y + LEGEND_HEIGHT + 50
 
     # Generate SVG
