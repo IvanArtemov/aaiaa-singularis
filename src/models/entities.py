@@ -240,7 +240,11 @@ ENTITY_SCHEMAS: Dict[EntityType, EntitySchema] = {
 
     EntityType.METHOD: EntitySchema(
         entity_type=EntityType.METHOD,
-        description="Methods, tools, instruments, or analytical procedures used in research",
+        description=(
+            "Detailed methodological descriptions including procedures, protocols, parameters, and instruments. "
+            "Must describe HOW the method was applied (steps, conditions, settings), not just mention that something was used. "
+            "Should contain specifics like: concentrations, temperatures, durations, software versions, instrument models, or procedural steps."
+        ),
         typical_sections=["methods", "materials"],
         signal_patterns=[
             r"\b(we\s+used|using|employed|performed|conducted)",

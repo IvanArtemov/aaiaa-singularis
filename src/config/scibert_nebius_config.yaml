@@ -35,7 +35,7 @@ scibert_nebius_pipeline:
       FACT: 10          # Many facts, lower top-k
       HYPOTHESIS: 30    # Rare, higher top-k
       EXPERIMENT: 20
-      METHOD: 15
+      METHOD: 10        # Reduced to minimize over-extraction
       RESULT: 15
       DATASET: 10
       ANALYSIS: 15
@@ -67,7 +67,7 @@ scibert_nebius_pipeline:
       FACT: 0.7
       HYPOTHESIS: 0.7
       EXPERIMENT: 0.7
-      METHOD: 0.7
+      METHOD: 0.80      # Higher threshold to filter simple mentions
       RESULT: 0.7
       DATASET: 0.7
       ANALYSIS: 0.7

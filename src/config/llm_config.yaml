@@ -7,6 +7,10 @@ nebius:
   models:
     chat: openai/gpt-oss-120b
     embeddings: BAAI/bge-en-icl
+  costs:
+    chat_input: 0.15      # $0.15 per 1M input tokens
+    chat_output: 0.60     # $0.60 per 1M output tokens
+    embeddings: 0      # $0.01 per 1M tokens
 
 general:
   log_requests: true

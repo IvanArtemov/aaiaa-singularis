@@ -215,6 +215,29 @@ class EntityValidator:
 
         candidates_str = "\n".join(candidate_texts)
 
+        # Build additional guidelines for METHOD type
+        method_guidelines = ""
+        if entity_type == EntityType.METHOD:
+            method_guidelines = """
+
+⚠️ STRICT CRITERIA FOR METHOD VALIDATION:
+
+✅ VALID METHOD must include procedural details (HOW it was done):
+- "Cells were cultured in DMEM with 10% FBS at 37°C for 24 hours"
+- "RT-PCR was performed using SuperScript III (Invitrogen) with 200ng RNA at 42°C"
+- "Images were analyzed using ImageJ v1.53 with automatic threshold detection"
+- Contains specifics: concentrations, temperatures, durations, versions, models, steps
+
+❌ INVALID - simple mentions without procedural details:
+- "We used RT-PCR to detect gene expression" (no HOW)
+- "Statistical analysis was performed" (no specifics)
+- "Data were processed using standard methods" (too vague)
+- "We employed microscopy techniques" (no details)
+
+Remember: A valid METHOD describes HOW (parameters, conditions, steps), not just WHAT was used.
+If the fragment lacks procedural details, mark is_valid=false with confidence < 0.5
+"""
+
         prompt = f"""You are validating scientific entities in a research paper.
 
 Entity Type: {entity_type.value.upper()}
@@ -243,7 +266,7 @@ Guidelines:
 - is_valid should be true only if the fragment clearly represents a {entity_type.value}
 - confidence should reflect how certain you are (0.0-1.0)
 - core_text should be the minimal essential text that captures the entity
-- If a fragment is not valid, still include it with is_valid=false and low confidence
+- If a fragment is not valid, still include it with is_valid=false and low confidence{method_guidelines}
 """
 
         return prompt
