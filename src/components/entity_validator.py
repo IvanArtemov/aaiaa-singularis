@@ -215,27 +215,58 @@ class EntityValidator:
 
         candidates_str = "\n".join(candidate_texts)
 
-        # Build additional guidelines for METHOD type
-        method_guidelines = ""
+        # Build additional guidelines for specific entity types
+        type_specific_guidelines = ""
+
         if entity_type == EntityType.METHOD:
-            method_guidelines = """
+            type_specific_guidelines = """
 
-⚠️ STRICT CRITERIA FOR METHOD VALIDATION:
+⚠️ METHOD VALIDATION CRITERIA (3 levels):
 
-✅ VALID METHOD must include procedural details (HOW it was done):
-- "Cells were cultured in DMEM with 10% FBS at 37°C for 24 hours"
+✅ HIGHLY VALID (confidence 0.85+) - Full procedural details:
 - "RT-PCR was performed using SuperScript III (Invitrogen) with 200ng RNA at 42°C"
-- "Images were analyzed using ImageJ v1.53 with automatic threshold detection"
-- Contains specifics: concentrations, temperatures, durations, versions, models, steps
+- "Cells were cultured in DMEM with 10% FBS at 37°C for 24 hours"
+- Contains: parameters, concentrations, temperatures, durations, versions
 
-❌ INVALID - simple mentions without procedural details:
-- "We used RT-PCR to detect gene expression" (no HOW)
-- "Statistical analysis was performed" (no specifics)
-- "Data were processed using standard methods" (too vague)
-- "We employed microscopy techniques" (no details)
+✅ VALID (confidence 0.70-0.85) - Method with context:
+- "We performed scRNA-seq on sorted CD4+ T cells from intestinal lamina propria"
+- "ATAC-seq analysis was performed to assess chromatin accessibility"
+- "Flow cytometry was used to analyze cell populations"
+- Has: method name + biological context + sample type
 
-Remember: A valid METHOD describes HOW (parameters, conditions, steps), not just WHAT was used.
-If the fragment lacks procedural details, mark is_valid=false with confidence < 0.5
+❌ INVALID (confidence < 0.65) - Only if too vague:
+- "Standard methods were used" (no specifics)
+- "Data were processed" (what method?)
+- Bare tool names without context: "PCR", "microscopy"
+"""
+
+        elif entity_type == EntityType.EXPERIMENT:
+            type_specific_guidelines = """
+
+⚠️ EXPERIMENT VALIDATION CRITERIA:
+
+✅ VALID EXPERIMENT includes:
+- Experimental manipulation: "CRISPR-Cas9 knockout of OCR369"
+- Comparative study: "Control vs Rorc Δ369 mice were compared"
+- Intervention + observation: "OCR369 deletion resulted in reduced APCs"
+- Experimental setup: "Cells were sorted and subjected to scRNA-seq analysis"
+
+Can be concise if experimental design is clear.
+Experiments describe WHAT WAS DONE to test hypothesis, not just observations.
+"""
+
+        elif entity_type == EntityType.DATASET:
+            type_specific_guidelines = """
+
+⚠️ DATASET VALIDATION CRITERIA:
+
+✅ VALID DATASET includes:
+- Public repository IDs: "GSM3638386", "GSE137319 from GEO database"
+- Generated datasets: "scRNA-seq data from sorted cells", "ATAC-seq datasets"
+- Referenced collections: "published datasets", "integrated with existing data"
+
+Dataset MENTIONS are sufficient - full descriptions not required.
+Look for data source identifiers or data collection references.
 """
 
         prompt = f"""You are validating scientific entities in a research paper.
@@ -266,7 +297,7 @@ Guidelines:
 - is_valid should be true only if the fragment clearly represents a {entity_type.value}
 - confidence should reflect how certain you are (0.0-1.0)
 - core_text should be the minimal essential text that captures the entity
-- If a fragment is not valid, still include it with is_valid=false and low confidence{method_guidelines}
+- If a fragment is not valid, still include it with is_valid=false and low confidence{type_specific_guidelines}
 """
 
         return prompt

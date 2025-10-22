@@ -33,11 +33,11 @@ scibert_nebius_pipeline:
     top_k_default: 20
     top_k_per_type:
       FACT: 10          # Many facts, lower top-k
-      HYPOTHESIS: 30    # Rare, higher top-k
-      EXPERIMENT: 20
-      METHOD: 10        # Reduced to minimize over-extraction
+      HYPOTHESIS: 35    # Rare, higher top-k (increased to improve recall)
+      EXPERIMENT: 25    # Increased to capture more experiments
+      METHOD: 12        # Balanced to avoid over-extraction but improve recall
       RESULT: 15
-      DATASET: 10
+      DATASET: 15       # Increased to find dataset mentions
       ANALYSIS: 15
       CONCLUSION: 20
 
@@ -65,11 +65,11 @@ scibert_nebius_pipeline:
     # Confidence thresholds per entity type
     confidence_threshold:
       FACT: 0.7
-      HYPOTHESIS: 0.7
-      EXPERIMENT: 0.7
-      METHOD: 0.80      # Higher threshold to filter simple mentions
+      HYPOTHESIS: 0.68  # Slightly lower to capture more hypotheses
+      EXPERIMENT: 0.68  # Lower to improve experiment detection
+      METHOD: 0.72      # Balanced threshold (not too strict)
       RESULT: 0.7
-      DATASET: 0.7
+      DATASET: 0.65     # Lower to accept dataset mentions
       ANALYSIS: 0.7
       CONCLUSION: 0.7
 

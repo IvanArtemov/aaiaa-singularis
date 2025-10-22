@@ -23,3 +23,7 @@ __pycache__/
 /scripts/chroma_*
 /docs/*.xml
 /docs/*.pdf
+/chroma_db_scibert/
+/chroma_db/
+/chroma_db_test/
+/docs/

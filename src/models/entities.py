@@ -228,7 +228,14 @@ ENTITY_SCHEMAS: Dict[EntityType, EntitySchema] = {
 
     EntityType.EXPERIMENT: EntitySchema(
         entity_type=EntityType.EXPERIMENT,
-        description="Experimental procedures, protocols, or studies designed to test hypotheses",
+        description=(
+            "Experimental procedures, setups, or manipulations performed to test hypotheses. "
+            "Includes: knockout/knockdown experiments (CRISPR, siRNA), comparative studies "
+            "(control vs treatment), experimental designs, in vivo/in vitro assays, "
+            "cell sorting experiments, intervention studies. "
+            "Can be concise (e.g., 'CRISPR knockout mice', 'deletion experiment') "
+            "if experimental intent is clear. Focus on WHAT WAS DONE, not just observations."
+        ),
         typical_sections=["methods", "materials"],
         signal_patterns=[
             r"\b(experiment|experimental\s+design|trial|study\s+design)",
@@ -270,7 +277,15 @@ ENTITY_SCHEMAS: Dict[EntityType, EntitySchema] = {
 
     EntityType.DATASET: EntitySchema(
         entity_type=EntityType.DATASET,
-        description="Data collections, databases, repositories, or sample sets used or generated",
+        description=(
+            "Data collections used or generated in research. "
+            "Includes: public repository accessions (GSE*, GSM*, SRA*, etc.), "
+            "generated datasets (scRNA-seq data, ATAC-seq data, ChIP-seq data), "
+            "references to existing datasets ('published datasets', 'integrated with...'), "
+            "sample collections, or cohort descriptions. "
+            "Brief mentions are acceptable if data source is identifiable "
+            "(e.g., 'GSE137319 from GEO database', 'scRNA-seq datasets')."
+        ),
         typical_sections=["methods", "materials", "results"],
         signal_patterns=[
             r"\b(dataset|database|repository|data\s+collection)",

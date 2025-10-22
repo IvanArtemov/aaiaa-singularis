@@ -4,26 +4,26 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ---
 
-## 📋 О проекте
+## 📋 Project Overview
 
-**Проект:** SciBERT-Nebius Knowledge Graph Extractor
-**Основано на:** Singularis Challenge - Реформа научного публикования
-**Хакатон:** Agentic AI Against Aging (https://www.hackaging.ai/)
+**Project:** SciBERT-Nebius Knowledge Graph Extractor
+**Based on:** Singularis Challenge - Scientific Publishing Reform
+**Hackathon:** Agentic AI Against Aging (https://www.hackaging.ai/)
 
-### Миссия
-Создать **cost-efficient** систему для извлечения структурированной информации из научных статей и построения knowledge graph, где статьи представлены как графы взаимосвязанных элементов.
+### Mission
+Create a **cost-efficient** system for extracting structured information from scientific papers and building knowledge graphs, where papers are represented as graphs of interconnected elements.
 
-### Структура извлекаемых элементов
-1. **Input Fact** - Установленное знание, входящее в исследование
-2. **Hypothesis** - Научное предположение для проверки
-3. **Experiment** - Процедура тестирования гипотезы
-4. **Technique/Method** - Используемые методы и инструменты
-5. **Result** - Полученные данные и наблюдения
-6. **Dataset** - Использованные или созданные коллекции данных
-7. **Analysis** - Статистическая/вычислительная обработка
-8. **Conclusion** - Интерпретации и выводы
+### Extracted Entity Types
+1. **Input Fact** - Established knowledge entering the research
+2. **Hypothesis** - Scientific assumptions to be tested
+3. **Experiment** - Procedures for testing hypotheses
+4. **Technique/Method** - Methods and tools used
+5. **Result** - Data and observations obtained
+6. **Dataset** - Data collections used or created
+7. **Analysis** - Statistical/computational processing
+8. **Conclusion** - Interpretations and findings
 
-### Ключевые связи
+### Key Relationships
 - Hypothesis → tested by → Experiment
 - Result → analyzed using → Analysis
 - Conclusion → based on → Result
@@ -31,7 +31,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ---
 
-## 🚀 Быстрый старт
+## 🚀 Quick Start
 
 ### Installation
 ```bash
@@ -50,8 +50,29 @@ cp .env.example .env
 
 ### Running Commands
 
+#### CLI Tool (Recommended for Single PDF Processing)
 ```bash
-# Test SciBERT-Nebius pipeline directly
+# Process single PDF - produces JSON + SVG output
+python scripts/process_pdf.py --pdf paper.pdf
+
+# Custom output directory
+python scripts/process_pdf.py -p paper.pdf -o results
+
+# Skip SVG generation (faster)
+python scripts/process_pdf.py -p paper.pdf --no-svg
+
+# Verbose mode for debugging
+python scripts/process_pdf.py -p paper.pdf -v
+```
+
+**Output files:**
+- `{paper_id}_entities.json` - Entities and relationships
+- `{paper_id}_metrics.json` - Performance metrics (time, cost, tokens)
+- `{paper_id}_graph.svg` - Visual knowledge graph (8-column layout)
+
+#### Example Scripts
+```bash
+# Test SciBERT-Nebius pipeline with pre-parsed XML
 python scripts/example_scibert_nebius_pipeline.py
 
 # Run Telegram Bot
@@ -60,11 +81,11 @@ python scripts/run_scibert_telegram_bot.py
 
 ---
 
-## 🏗️ Архитектура
+## 🏗️ Architecture
 
 ### SciBERT-Nebius Pipeline
 
-**Упрощенная гибридная архитектура:**
+**Hybrid Architecture:**
 - **SciBERT embeddings** (FREE, domain-optimized, 768 dims)
 - **Nebius gpt-oss-120b LLM** (cost-efficient, $0.15/$0.60 per 1M tokens)
 - **ChromaDB** semantic search (FREE, local)
@@ -87,13 +108,13 @@ PDF → GROBID Parser → IMRAD sections
             SVG Visualization
 ```
 
-**Cost:** ~$0.018 per paper  
-**Target Precision:** ≥88%  
+**Cost:** ~$0.018 per paper
+**Target Precision:** ≥88%
 **Target Recall:** ≥82%
 
 ---
 
-## 📦 Структура проекта
+## 📦 Project Structure
 
 ```
 AAIAA/
@@ -106,8 +127,9 @@ AAIAA/
 │   ├── session_manager.py
 │   └── utils.py
 ├── scripts/
-│   ├── example_scibert_nebius_pipeline.py
-│   └── run_scibert_telegram_bot.py
+│   ├── process_pdf.py                      # CLI tool for single PDF
+│   ├── example_scibert_nebius_pipeline.py  # Example with pre-parsed XML
+│   └── run_scibert_telegram_bot.py         # Telegram bot
 ├── src/
 │   ├── components/
 │   │   ├── entity_validator.py      # LLM-based validation
@@ -150,6 +172,20 @@ AAIAA/
 ---
 
 ## 💻 Key Modules
+
+### CLI Tool
+**File:** `scripts/process_pdf.py`
+
+Command-line tool for processing single PDFs:
+- Parses PDF with GROBID
+- Runs SciBERT-Nebius pipeline
+- Saves JSON results (entities, metrics)
+- Generates SVG visualization
+
+**Usage:**
+```bash
+python scripts/process_pdf.py --pdf paper.pdf -o results
+```
 
 ### SciBERT-Nebius Pipeline
 **File:** `src/pipelines/scibert_nebius_pipeline.py`
@@ -196,7 +232,7 @@ PDF to Knowledge Graph Telegram Bot:
 
 ---
 
-## 🛠️ Технический стек
+## 🛠️ Tech Stack
 
 ### Core
 - **Python 3.10+**
@@ -243,14 +279,14 @@ Configure:
 
 ---
 
-## 📊 Метрики
+## 📊 Metrics
 
-### Целевые показатели
+### Target Metrics
 - **Precision:** ≥88%
 - **Recall:** ≥82%
 - **F1-score:** ≥85%
-- **Стоимость:** ~$0.018 на статью
-- **Скорость:** 60-90 секунд
+- **Cost:** ~$0.018 per paper
+- **Speed:** 60-90 seconds
 
 ### Cost Breakdown
 - **Embeddings (SciBERT):** $0.000 (FREE)
@@ -274,7 +310,12 @@ Configure:
 - Use SciBERT (FREE) over API embeddings
 - Prefer heuristics over LLM
 
+### Testing
+- Test pipeline with `scripts/example_scibert_nebius_pipeline.py`
+- Use `process_pdf.py --verbose` for debugging
+- Check output JSON and SVG files for correctness
+
 ---
 
-**Last Updated:** October 21, 2025  
-**Status:** Production (Simplified)
+**Last Updated:** October 22, 2025
+**Status:** Production
