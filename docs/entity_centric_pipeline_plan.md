@@ -129,6 +129,7 @@ class EmbeddingGenerator:
 - Signal patterns для regex-подсказок
 
 **Структура:**
+
 ```python
 @dataclass
 class EntitySchema:
@@ -136,7 +137,8 @@ class EntitySchema:
     entity_type: EntityType
     description: str
     typical_sections: List[str]  # где чаще встречается
-    signal_patterns: List[str]   # начальные паттерны для regex
+    signal_patterns: List[str]  # начальные паттерны для regex
+
 
 # Предопределённые схемы для всех 8 типов
 ENTITY_SCHEMAS: Dict[EntityType, EntitySchema] = {
@@ -149,8 +151,8 @@ ENTITY_SCHEMAS: Dict[EntityType, EntitySchema] = {
             r"\b(it\s+is\s+likely|may\s+explain|could\s+indicate)"
         ]
     ),
-    EntityType.TECHNIQUE: EntitySchema(
-        entity_type=EntityType.TECHNIQUE,
+    EntityType.METHOD: EntitySchema(
+        entity_type=EntityType.METHOD,
         description="Methods, protocols, tools, or techniques used",
         typical_sections=["methods", "materials"],
         signal_patterns=[
@@ -695,10 +697,11 @@ class CacheManager:
 
 #### 8.3 Adaptive Top-K
 **Логика:**
+
 ```python
 TOP_K_CONFIG = {
-    EntityType.FACT: 10,        # Много фактов, низкий top-k
-    EntityType.TECHNIQUE: 15,   # Средняя сложность
+    EntityType.FACT: 10,  # Много фактов, низкий top-k
+    EntityType.METHOD: 15,  # Средняя сложность
     EntityType.RESULT: 15,
     EntityType.EXPERIMENT: 20,
     EntityType.HYPOTHESIS: 30,  # Редкие, высокий top-k

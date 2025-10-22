@@ -99,7 +99,7 @@ class SciBertBotHandlers:
 
         try:
             # Check rate limit
-            self.session_manager.check_rate_limit(user.id)
+            # self.session_manager.check_rate_limit(user.id)
 
             # Check if already processing
             if self.session_manager.is_processing(user.id):

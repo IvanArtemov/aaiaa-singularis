@@ -142,7 +142,7 @@ class EntityKeywordGenerator:
             EntityType.FACT,
             EntityType.HYPOTHESIS,
             EntityType.EXPERIMENT,
-            EntityType.TECHNIQUE,
+            EntityType.METHOD,
             EntityType.RESULT,
             EntityType.DATASET,
             EntityType.ANALYSIS,
@@ -216,7 +216,7 @@ Keywords should be:
                 "Experiments are procedures to test hypotheses. "
                 "Look for: experimental designs, test protocols, trial setups, controlled studies."
             ),
-            EntityType.TECHNIQUE: (
+            EntityType.METHOD: (
                 "Techniques are methods, tools, or procedures used. "
                 "Look for: analytical methods, instruments, software, protocols, assays."
             ),

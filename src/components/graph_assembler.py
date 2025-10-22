@@ -185,7 +185,7 @@ class GraphAssembler:
         relationships = []
 
         experiments = entities_by_type.get(EntityType.EXPERIMENT, [])
-        techniques = entities_by_type.get(EntityType.TECHNIQUE, [])
+        techniques = entities_by_type.get(EntityType.METHOD, [])
 
         for experiment in experiments:
             for technique in techniques:
@@ -249,7 +249,7 @@ class GraphAssembler:
         """Link techniques (methods) to results"""
         relationships = []
 
-        techniques = entities_by_type.get(EntityType.TECHNIQUE, [])
+        techniques = entities_by_type.get(EntityType.METHOD, [])
         results = entities_by_type.get(EntityType.RESULT, [])
 
         # Methods → Results is a common relationship

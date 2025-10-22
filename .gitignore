@@ -19,3 +19,7 @@ __pycache__/
 /scripts/open_ai_test.py
 /scripts/together_ai_test.py
 /results
+/bot/results
+/scripts/chroma_*
+/docs/*.xml
+/docs/*.pdf

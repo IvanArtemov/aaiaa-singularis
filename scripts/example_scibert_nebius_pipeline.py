@@ -2,7 +2,7 @@
 Example: SciBERT-Nebius Hybrid Extraction Pipeline
 
 Demonstrates the SciBERT-Nebius extraction workflow:
-1. Parse PDF with GROBID (ML-based structured extraction)
+1. Parse GROBID TEI XML (pre-parsed scientific article)
 2. Generate sentence embeddings with SciBERT (FREE, 768 dims)
 3. Generate entity-specific keywords with Nebius (~$0.003)
 4. Semantic retrieval with ChromaDB (FREE)
@@ -12,6 +12,8 @@ Demonstrates the SciBERT-Nebius extraction workflow:
 Total cost: ~$0.018 per paper
 Embeddings: SciBERT (FREE, domain-optimized for scientific papers)
 LLM: Nebius gpt-oss-120b (cost-efficient)
+
+Note: This script reads pre-parsed GROBID XML instead of calling GROBID service
 """
 
 import os
@@ -41,18 +43,6 @@ def check_prerequisites():
         issues.append("   Get your API key from: https://studio.nebius.com/")
     else:
         print("✅ Nebius API key found")
-
-    # Check GROBID service
-    try:
-        import requests
-        response = requests.get("https://lfoppiano-grobid.hf.space/api/isalive", timeout=2)
-        if response.status_code == 200:
-            print("✅ GROBID service running")
-        else:
-            issues.append("❌ GROBID service not responding")
-    except Exception:
-        issues.append("❌ GROBID not available")
-        issues.append("   Run: docker run --rm -p 8070:8070 lfoppiano/grobid:0.8.0")
 
     # Check if transformers/torch are installed (for SciBERT)
     try:
@@ -84,33 +74,27 @@ def main():
     if not check_prerequisites():
         return
 
-    # ========== Step 1: Setup PDF path ==========
-    pdf_path = project_root / "docs" / "sample_article.pdf"
+    # ========== Step 1: Setup XML path ==========
+    xml_path = project_root / "docs" / "sample_article.xml"
 
-    if not pdf_path.exists():
-        # Try alternative path
-        pdf_path = project_root / "docs" / "2508.05666v1.pdf"
-
-    if not pdf_path.exists():
-        print(f"\n❌ Error: Sample PDF not found at {pdf_path}")
-        print("Please place a PDF file at docs/sample_article.pdf")
+    if not xml_path.exists():
+        print(f"\n❌ Error: Sample XML not found at {xml_path}")
+        print("Please place a GROBID TEI XML file at docs/sample_article.xml")
         return
 
-    print(f"\n📄 PDF: {pdf_path.name}")
+    print(f"\n📄 XML: {xml_path.name}")
 
-    # ========== Step 2: Parse PDF with GROBID ==========
+    # ========== Step 2: Parse GROBID XML ==========
     print("\n" + "=" * 70)
-    print("STEP 1: Parsing PDF with GROBID")
+    print("STEP 1: Parsing GROBID TEI XML")
     print("=" * 70)
 
     try:
         parser = GrobidParser()
-        print("\nParsing PDF...")
-        parsed_doc = parser.parse(str(pdf_path))
+        print("\nParsing XML...")
+        parsed_doc = parser.parse_from_xml(str(xml_path))
     except Exception as e:
-        print(f"\n❌ Error parsing PDF: {e}")
-        print("\nMake sure GROBID server is running:")
-        print("  docker run --rm -p 8070:8070 lfoppiano/grobid:0.8.0")
+        print(f"\n❌ Error parsing XML: {e}")
         return
 
     print(f"\n✅ Document parsed successfully:")
@@ -138,7 +122,7 @@ def main():
 
         result = pipeline.extract(
             parsed_doc=parsed_doc,
-            paper_id=pdf_path.stem
+            paper_id=xml_path.stem
         )
 
     except Exception as e:
@@ -279,7 +263,7 @@ def main():
     results_dir = project_root / "results"
     results_dir.mkdir(exist_ok=True)
 
-    output_file = results_dir / f"{pdf_path.stem}_scibert_nebius.json"
+    output_file = results_dir / f"{xml_path.stem}_scibert_nebius.json"
 
     # Convert result to dict
     result_dict = {

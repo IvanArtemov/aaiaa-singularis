@@ -35,7 +35,7 @@ scibert_nebius_pipeline:
       FACT: 10          # Many facts, lower top-k
       HYPOTHESIS: 30    # Rare, higher top-k
       EXPERIMENT: 20
-      TECHNIQUE: 15
+      METHOD: 15
       RESULT: 15
       DATASET: 10
       ANALYSIS: 15
@@ -47,7 +47,7 @@ scibert_nebius_pipeline:
       FACT: ["introduction", "abstract", "discussion"]
       HYPOTHESIS: ["introduction", "abstract"]
       EXPERIMENT: ["methods", "materials"]
-      TECHNIQUE: ["methods", "materials"]
+      METHOD: ["methods", "materials"]
       RESULT: ["results", "discussion"]
       DATASET: ["methods", "materials", "results"]
       ANALYSIS: ["methods", "results"]
@@ -67,7 +67,7 @@ scibert_nebius_pipeline:
       FACT: 0.7
       HYPOTHESIS: 0.7
       EXPERIMENT: 0.7
-      TECHNIQUE: 0.7
+      METHOD: 0.7
       RESULT: 0.7
       DATASET: 0.7
       ANALYSIS: 0.7

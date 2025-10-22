@@ -196,6 +196,67 @@ class GrobidParser(BaseParser):
             title=title
         )
 
+    def parse_from_xml(self, xml_path: str) -> ParsedDocument:
+        """
+        Parse GROBID TEI XML file directly (without calling GROBID service)
+
+        Args:
+            xml_path: Path to GROBID TEI XML file
+
+        Returns:
+            ParsedDocument with extracted structure
+
+        Raises:
+            FileNotFoundError: If file doesn't exist
+            ValueError: If file format is not XML
+        """
+        start_time = time.time()
+
+        xml_path = Path(xml_path)
+        if not xml_path.exists():
+            raise FileNotFoundError(f"File not found: {xml_path}")
+
+        if not xml_path.suffix.lower() == '.xml':
+            raise ValueError(f"Not an XML file: {xml_path}")
+
+        # Read and parse TEI XML
+        try:
+            with open(xml_path, 'r', encoding='utf-8') as f:
+                tei_xml = f.read()
+            root = ET.fromstring(tei_xml)
+        except Exception as e:
+            raise ValueError(f"Failed to parse XML file: {e}")
+
+        # Extract metadata
+        metadata = self._extract_metadata(root)
+
+        # Extract title from metadata
+        title = metadata.get("title", "")
+
+        # Extract IMRAD sections
+        imrad_sections = self._extract_imrad_sections(root)
+
+        # Extract full text
+        full_text = self._extract_full_text(root)
+
+        # Count words and pages
+        word_count = self._count_words(full_text)
+        page_count = self._count_pages(root)
+
+        parse_time = time.time() - start_time
+
+        return ParsedDocument(
+            text=full_text,
+            sections={},  # Legacy, use imrad_sections instead
+            metadata=metadata,
+            word_count=word_count,
+            page_count=page_count,
+            parse_time=parse_time,
+            imrad_sections=imrad_sections,
+            _spacy_doc=None,  # GROBID provides pre-segmented text
+            title=title
+        )
+
     def supports_format(self, file_extension: str) -> bool:
         """Check if parser supports PDF format"""
         return file_extension.lower() in ['.pdf']

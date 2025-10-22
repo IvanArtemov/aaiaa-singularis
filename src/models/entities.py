@@ -11,7 +11,7 @@ class EntityType(Enum):
     FACT = "fact"
     HYPOTHESIS = "hypothesis"
     EXPERIMENT = "experiment"
-    TECHNIQUE = "technique"
+    METHOD = "method"
     RESULT = "result"
     DATASET = "dataset"
     ANALYSIS = "analysis"
@@ -238,8 +238,8 @@ ENTITY_SCHEMAS: Dict[EntityType, EntitySchema] = {
         ]
     ),
 
-    EntityType.TECHNIQUE: EntitySchema(
-        entity_type=EntityType.TECHNIQUE,
+    EntityType.METHOD: EntitySchema(
+        entity_type=EntityType.METHOD,
         description="Methods, tools, instruments, or analytical procedures used in research",
         typical_sections=["methods", "materials"],
         signal_patterns=[
