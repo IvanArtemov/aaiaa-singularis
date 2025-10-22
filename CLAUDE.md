@@ -6,16 +6,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 📋 О проекте
 
-**Проект:** Singularis Challenge - Реформа научного публикования
+**Проект:** SciBERT-Nebius Knowledge Graph Extractor
+**Основано на:** Singularis Challenge - Реформа научного публикования
 **Хакатон:** Agentic AI Against Aging (https://www.hackaging.ai/)
-**Дедлайн:** 22 октября 2025, 11:59 PM PT (Code Freeze)
-**Призовой фонд:** $20,000
 
-### Миссия Singularis
-Изменить способ взаимодействия ученых со знаниями. Минимальная публикуемая единица должна быть **меньше научной статьи** — это может быть одна гипотеза, эксперимент, метод, результат или датасет.
-
-### Задача
-Создать **cost-efficient** систему для извлечения структурированной информации из **50 миллионов научных статей** и построения knowledge graph, где статьи представлены как графы взаимосвязанных элементов.
+### Миссия
+Создать **cost-efficient** систему для извлечения структурированной информации из научных статей и построения knowledge graph, где статьи представлены как графы взаимосвязанных элементов.
 
 ### Структура извлекаемых элементов
 1. **Input Fact** - Установленное знание, входящее в исследование
@@ -35,389 +31,250 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ---
 
-## 🔑 Критические требования
-
-### ⚡ ЭКОНОМИЧНОСТЬ (ГЛАВНЫЙ ПРИОРИТЕТ!)
-- Минимальная стоимость обработки одной статьи
-- Целевая метрика: **< $0.05 на статью**
-- Система должна масштабироваться на **миллионы статей**
-- ❌ НЕ использовать чисто LLM-подход
-- ✅ Использовать гибридный подход: LLM + regex + NLP + heuristics
-
-### 📊 Целевые метрики
-- **Precision:** ≥ 85%
-- **Recall:** ≥ 80%
-- **F1-score:** ≥ 82%
-- **Стоимость:** < $0.05 на статью
-- **Скорость:** > 100 статей/час
-- **Масштаб:** Проектируемость на 50M статей
-
----
-
-## 💻 Development Commands
+## 🚀 Быстрый старт
 
 ### Installation
 ```bash
-# Install all dependencies
+# Install dependencies
 pip install -r requirements.txt
+
+# Download spaCy model
+python -m spacy download en_core_web_sm
 
 # Set up environment variables
 cp .env.example .env
-# Edit .env and add your OPENAI_API_KEY
+# Edit .env and add:
+# - TELEGRAM_BOT_TOKEN (from @BotFather)
+# - NEBIUS_API_KEY (from https://studio.nebius.com/)
 ```
 
-### Running Tests
-```bash
-# Run all tests
-pytest
-
-# Run with verbose output
-pytest -v
-
-# Run only integration tests
-pytest tests/integration/ -v
-
-# Run with coverage report
-pytest --cov=src --cov-report=term-missing
-
-# Generate HTML coverage report
-pytest --cov=src --cov-report=html
-# Open htmlcov/index.html in browser
-```
-
-### Running Examples
+### Running Commands
 
 ```bash
-# Test LLM adapters (OpenAI/Ollama)
-python scripts/example_adapters.py
+# Test SciBERT-Nebius pipeline directly
+python scripts/example_scibert_nebius_pipeline.py
 
-# Test PubMed fetcher
-python scripts/example_fetchers.py
-
-# Test arXiv fetcher
-python scripts/example_arxiv.py
-
-# Download PDFs from PubMed
-python scripts/download_pdfs_demo.py
-
-# Extract PDFs from PMC packages
-python scripts/extract_pdfs_from_packages.py
-
-# Batch download by topic (PubMed)
-python scripts/batch_download_cross_referenced.py
-
-# Batch download KG papers (arXiv)
-python scripts/batch_download_arxiv_kg.py
-
-# Test PDF parser
-python scripts/example_pdf_parser.py
-
-# Test LLM extraction pipeline
-python scripts/example_llm_pipeline.py
-
-# Generate SVG knowledge graph
-python scripts/generate_svg.py results/sample_result.json
-```
-
-### Configuration
-
-**Switch LLM Provider (OpenAI ↔ Ollama):**
-Edit `src/config/llm_config.yaml`:
-```yaml
-active_provider: "openai"  # or "ollama"
-```
-
-**PubMed API Key (optional but recommended):**
-Add to `.env`:
-```
-NCBI_API_KEY=your_api_key_here
-```
-This increases rate limit from 3 req/sec to 10 req/sec.
-
----
-
-## 🏗️ Code Architecture
-
-### High-Level Design Principles
-
-**1. Factory Pattern for Extensibility**
-- `get_llm_adapter(provider)` - Create LLM adapters (OpenAI, Ollama, etc.)
-- `get_fetcher(type)` - Create paper fetchers (PubMed, PMC, etc.)
-- `get_parser(format)` - Create document parsers (PDF, TXT, HTML)
-
-**2. Pipeline Abstraction**
-All extraction pipelines inherit from `BasePipeline`:
-- `LLMPipeline` - High-quality extraction using GPT (~$0.03-$0.30/paper)
-- `RegexPipeline` - Pattern-based extraction (free, lower quality)
-- `HybridPipeline` - Optimal balance (~$0.02/paper target)
-
-Each pipeline implements:
-```python
-def extract(paper_text: str, paper_id: str) -> ExtractionResult
-def get_metrics() -> PipelineMetrics
-def get_description() -> str
-def get_estimated_cost() -> float
-```
-
-**3. Type-Safe Data Models**
-- `Entity` - Structured entity with `EntityType` enum
-- `Relationship` - Typed relationship with `RelationshipType` enum
-- `KnowledgeGraph` - Collection of entities and relationships
-- `ExtractionResult` - Complete pipeline output with metrics
-
-**4. Configuration Management**
-- YAML-based configs: `src/config/llm_config.yaml`, `fetcher_config.yaml`
-- Environment variables for API keys
-- `Settings` class centralizes configuration access
-
-**5. Modular Component Design**
-```
-Input → Parser → Pipeline → Extractor → Model → Validator → Output
+# Run Telegram Bot
+python scripts/run_scibert_telegram_bot.py
 ```
 
 ---
 
-## 📦 Key Modules
+## 🏗️ Архитектура
 
-### Core Data Models (`src/models/`)
+### SciBERT-Nebius Pipeline
 
-**`entities.py`** - Core data structures:
-- `EntityType` enum: FACT, HYPOTHESIS, EXPERIMENT, TECHNIQUE, RESULT, DATASET, ANALYSIS, CONCLUSION
-- `RelationshipType` enum: HYPOTHESIS_TO_EXPERIMENT, METHOD_TO_RESULT, etc.
-- `Entity` class: id, type, text, confidence, source_section, metadata
-- `Relationship` class: source_id, target_id, relationship_type, confidence
+**Упрощенная гибридная архитектура:**
+- **SciBERT embeddings** (FREE, domain-optimized, 768 dims)
+- **Nebius gpt-oss-120b LLM** (cost-efficient, $0.15/$0.60 per 1M tokens)
+- **ChromaDB** semantic search (FREE, local)
+- **GROBID** ML parser (FREE, structured IMRAD extraction)
 
-**`graph.py`** - Knowledge graph structure:
-- `KnowledgeGraph` class: paper_id, entities, relationships
-- Conversion to NetworkX graphs for visualization
+**Pipeline Flow:**
+```
+PDF → GROBID Parser → IMRAD sections
+                    ↓
+            SciBERT Embeddings (FREE)
+                    ↓
+            Keyword Generation (Nebius, ~$0.003)
+                    ↓
+            Semantic Retrieval (ChromaDB, FREE)
+                    ↓
+            Entity Validation (Nebius, ~$0.015)
+                    ↓
+            Graph Assembly (Heuristics, FREE)
+                    ↓
+            SVG Visualization
+```
 
-**`results.py`** - Pipeline outputs:
-- `ExtractionResult`: paper_id, entities (grouped by type), relationships, metrics
-- `PipelineMetrics`: processing_time, tokens_used, cost_usd, entities_extracted
+**Cost:** ~$0.018 per paper  
+**Target Precision:** ≥88%  
+**Target Recall:** ≥82%
 
-### Extraction Pipelines (`src/pipelines/`)
+---
 
-**`base_pipeline.py`** - Abstract base class:
-- Defines contract for all extraction pipelines
-- Standardized interface for metrics collection
+## 📦 Структура проекта
 
-**`llm_pipeline.py`** - LLM-based extraction:
-- Uses GPT-4o-mini (or configurable model) via OpenAI SDK
-- Structured JSON output with few-shot prompting
-- Cost: ~$0.03/paper (GPT-4o-mini) or ~$0.30/paper (GPT-4)
-- Use case: Ground truth generation, high-quality baseline
+```
+AAIAA/
+├── bot/
+│   ├── __init__.py
+│   ├── exceptions.py
+│   ├── scibert_config.py
+│   ├── scibert_handlers.py
+│   ├── scibert_telegram_bot.py
+│   ├── session_manager.py
+│   └── utils.py
+├── scripts/
+│   ├── example_scibert_nebius_pipeline.py
+│   └── run_scibert_telegram_bot.py
+├── src/
+│   ├── components/
+│   │   ├── entity_validator.py      # LLM-based validation
+│   │   ├── graph_assembler.py        # Heuristic relationships
+│   │   └── semantic_retriever.py     # ChromaDB search
+│   ├── config/
+│   │   ├── grobid_config.yaml
+│   │   ├── scibert_nebius_config.yaml
+│   │   └── settings.py
+│   ├── embedding_adapters/
+│   │   ├── base_embedding_adapter.py
+│   │   ├── factory.py
+│   │   └── scibert_adapter.py        # FREE SciBERT embeddings
+│   ├── extractors/
+│   │   ├── keyword_generator.py      # LLM keyword generation
+│   │   └── sentence_embedder.py      # Sentence splitting + embeddings
+│   ├── llm_adapters/
+│   │   ├── base_adapter.py
+│   │   ├── factory.py
+│   │   └── nebius_adapter.py         # Nebius AI Studio
+│   ├── models/
+│   │   ├── entities.py               # Entity, EntityType, etc.
+│   │   ├── graph.py                  # KnowledgeGraph
+│   │   ├── results.py                # ExtractionResult, Metrics
+│   │   └── sentence.py               # Sentence with embeddings
+│   ├── parsers/
+│   │   ├── base_parser.py
+│   │   └── grobid_parser.py          # ML-based IMRAD extraction
+│   ├── pipelines/
+│   │   ├── base_pipeline.py
+│   │   └── scibert_nebius_pipeline.py
+│   └── visualization/
+│       └── generate_svg.py           # SVG graph generation
+├── .env
+├── CLAUDE.md
+├── README.md
+└── requirements.txt
+```
 
-### LLM Adapters (`src/llm_adapters/`)
+---
 
-**Factory-based LLM abstraction:**
-- `base_adapter.py` - Abstract interface
-- `openai_adapter.py` - OpenAI/ChatGPT implementation
-- `ollama_adapter.py` - Local Ollama implementation
-- `factory.py` - `get_llm_adapter(provider)` factory function
+## 💻 Key Modules
+
+### SciBERT-Nebius Pipeline
+**File:** `src/pipelines/scibert_nebius_pipeline.py`
+
+Main extraction pipeline combining:
+- SciBERT for FREE domain-optimized embeddings
+- Nebius gpt-oss-120b for cost-efficient LLM processing
+- ChromaDB for semantic candidate retrieval
+- Parallel entity validation (4 threads)
 
 **Usage:**
 ```python
-from src.llm_adapters import get_llm_adapter
+from src.pipelines import SciBertNebiusPipeline
+from src.parsers import GrobidParser
 
-llm = get_llm_adapter("openai")  # or "ollama"
-result = llm.generate(prompt="...", system_prompt="...")
-embeddings = llm.embed(["text1", "text2"])
+# Parse PDF
+parser = GrobidParser()
+parsed_doc = parser.parse("paper.pdf")
+
+# Extract entities
+pipeline = SciBertNebiusPipeline()
+result = pipeline.extract(parsed_doc, paper_id="paper123")
+
+# Access results
+print(f"Entities: {result.total_entities()}")
+print(f"Relationships: {result.total_relationships()}")
+print(f"Cost: ${result.metrics.cost_usd:.4f}")
 ```
 
-### Paper Fetchers (`src/fetchers/`)
+### Telegram Bot
+**File:** `bot/scibert_telegram_bot.py`
 
-**Multi-source paper fetching:**
-- `base_fetcher.py` - Abstract fetcher interface
-- `pubmed_fetcher.py` - PubMed API implementation (E-utilities)
-- `arxiv_fetcher.py` - arXiv API implementation (arxiv.py)
-- `factory.py` - `get_fetcher(type)` factory
+PDF to Knowledge Graph Telegram Bot:
+- Accepts PDF uploads
+- Processes with SciBERT-Nebius pipeline
+- Returns SVG knowledge graph
+- Rate limiting + session management
 
 **Features:**
-- Search by query: `fetcher.search("aging research", max_results=10)`
-- Fetch metadata: `paper = fetcher.fetch_paper(pmid)` or `fetcher.fetch_paper(arxiv_id)`
-- Download PDFs: Full-text PDF download (PubMed PMC, arXiv)
-- Category search: `arxiv_fetcher.search_by_category(["cs.CL", "cs.AI"])`
-- Article registry: Track downloaded papers in `articles/metadata.json`
-
-**Supported Sources:**
-- **PubMed/PMC:** Biomedical literature (NCBI E-utilities API)
-- **arXiv:** Preprints in physics, CS, math, biology, etc.
-
-### Document Parsers (`src/parsers/`)
-
-**Multi-format document parsing:**
-- `base_parser.py` - Abstract parser interface
-- `pdf_parser.py` - PDF parsing using PyMuPDF (fitz)
-  - Text extraction with layout preservation
-  - Section detection (Abstract, Methods, Results, etc.)
-  - Metadata extraction (title, authors, dates)
-  - Optional table extraction via pdfplumber
-
-**Section Detection:**
-Automatically detects common paper sections using regex patterns:
-- Abstract, Introduction, Methods, Results, Discussion, Conclusion, References
-
-### Visualization (`src/visualization/`)
-
-**`generate_svg.py`** - SVG knowledge graph generator:
-- Hierarchical layout with entity types in columns
-- Color-coded entities and relationships
-- Bezier curve edges with arrow markers
-- XML-safe text escaping
-- Auto-sizing based on content
-
-**Usage:**
-```bash
-python -m src.visualization.generate_svg results/output.json graph.svg
-```
-
-### Utilities (`src/utils/`)
-
-**`article_registry.py`** - Article metadata tracking:
-- SQLite-like JSON registry for downloaded papers
-- Track PMID, arXiv ID, PMC ID, DOI, PDF path, download source
-- Statistics: total articles, size, source breakdown
-- Deduplication and lookup by any identifier (PMID, arXiv ID, PMC ID, DOI)
-
----
-
-## 💡 Cost Optimization Strategy
-
-### Three-Pipeline Approach
-
-**1. LLM Pipeline (Ground Truth)**
-- Model: GPT-4 or GPT-4o-mini
-- Cost: $0.03-$0.30 per paper
-- Precision: ~95% (expected)
-- Use: Create 10-15 annotated papers as ground truth
-
-**2. Regex Pipeline (Baseline)**
-- Cost: $0.00 (CPU only)
-- Precision: ~60-70% (expected)
-- Speed: 200-300 papers/hour
-- Use: Fast processing, simple pattern matching
-
-**3. Hybrid Pipeline (Production Target)**
-- Cost: ~$0.02 per paper
-- Precision: ≥85% (target)
-- Strategy:
-  1. Regex for simple patterns (Methods, Results)
-  2. NLP (spaCy) for entity recognition (Facts)
-  3. Selective LLM for complex reasoning (Hypotheses, Conclusions)
-
-**Decision Algorithm:**
-```
-If regex confidence > 0.8:
-    Use regex result (FREE)
-Elif entity_type in [facts, techniques]:
-    Use NLP extractor (~$0.001/paper)
-Elif entity_type in [hypotheses, conclusions]:
-    Use LLM selectively (~$0.01/paper)
-```
-
-### Optimization Techniques
-1. **Batch processing** - Combine multiple sections into single API call
-2. **Caching** - LRU cache for identical text segments
-3. **Model selection** - GPT-4o-mini instead of GPT-4 (20x cheaper)
-4. **Chunking** - Process only relevant sections, not full papers
+- `/start` - Welcome message
+- `/help` - Instructions
+- `/stats` - User statistics
+- PDF upload → automatic processing → SVG graph
 
 ---
 
 ## 🛠️ Технический стек
 
-### Core (Existing)
+### Core
 - **Python 3.10+**
-- **OpenAI SDK** - GPT-4o-mini for LLM extraction
-- **PyMuPDF (fitz)** - PDF text extraction
-- **pdfplumber** - PDF table extraction
-- **requests** - HTTP client for API calls
-- **arxiv** - arXiv API wrapper for paper fetching
-- **python-dotenv** - Environment variable management
-- **pyyaml** - YAML configuration parsing
+- **OpenAI SDK** - Used by Nebius adapter (OpenAI-compatible API)
+- **grobid-client-python** - ML-based PDF extraction
+- **spacy** - Sentence splitting (en_core_web_sm model)
+- **pyyaml** - Configuration
+- **python-dotenv** - Environment variables
 
-### Testing
-- **pytest** - Test framework
-- **pytest-cov** - Coverage reporting
+### Pipeline
+- **transformers** - SciBERT model
+- **torch** - SciBERT inference
+- **chromadb** - Vector database
+- **scikit-learn** - Utilities
+- **numpy** - Vector operations
 
-### Future Dependencies (Planned)
-```python
-# Will be added as needed:
-chromadb>=0.4.0          # Vector database
-streamlit>=1.28.0        # Web UI
-spacy>=3.7.0             # NLP for hybrid pipeline
-scispacy>=0.5.0          # Scientific text processing
-networkx>=3.2.0          # Graph processing
-plotly>=5.17.0           # Interactive visualizations
+### Telegram Bot
+- **python-telegram-bot** - Telegram API
+- **aiofiles** - Async file ops
+
+---
+
+## 🔑 Configuration
+
+### Environment Variables (`.env`)
+```bash
+# Required
+TELEGRAM_BOT_TOKEN=your_bot_token_from_botfather
+NEBIUS_API_KEY=your_nebius_api_key
+
+# Optional
+GROBID_URL=https://lfoppiano-grobid.hf.space
 ```
 
----
+### Pipeline Config
+**File:** `src/config/scibert_nebius_config.yaml`
 
-## 🎯 Критерии оценки жюри
-
-### 1. Полнота и Точность (25%)
-- **Precision:** % корректно извлеченных элементов
-- **Recall:** % найденных элементов от всех существующих
-- **F1 Score:** Гармоническое среднее precision и recall
-
-### 2. Робастность (25%)
-- **Форматы:** Обработка PDF, HTML, XML
-- **Стабильность:** Работа с разными журналами и стилями написания
-- **Error Handling:** Восстановление после ошибок
-
-### 3. Стоимостный Анализ (25%)
-- **CPU/GPU часы:** Использованные вычислительные ресурсы
-- **$/статья:** Общая стоимость обработки
-- **Tokens used:** Метрики потребления API
-- **Масштабируемость:** Проекция на 50M статей
-
-### 4. Производительность (25%)
-- **Throughput:** Статей обработано в час
-- **Latency:** Время отклика
-- **Parallelization:** Горизонтальное масштабирование
+Configure:
+- Embedding batch sizes
+- Keyword generation
+- Semantic retrieval top-k per entity type
+- Validation confidence thresholds
+- Graph assembly settings
 
 ---
 
-## ⭐ BONUS POINTS
+## 📊 Метрики
 
-1. **Алгоритмические или гибридные решения** с значительным снижением стоимости при сохранении качества
+### Целевые показатели
+- **Precision:** ≥88%
+- **Recall:** ≥82%
+- **F1-score:** ≥85%
+- **Стоимость:** ~$0.018 на статью
+- **Скорость:** 60-90 секунд
 
-2. **Улучшение концептуального фреймворка:**
-   - Новые техники извлечения
-   - Улучшенное определение связей
-   - Оптимизированные структуры графа
-   - Креативные стратегии оптимизации стоимости
-
----
-
-## 📝 Требования к подаче
-
-✅ **Обязательно:**
-- 🎥 **Видео-демо** (3-5 минут)
-- 💻 **Открытый репозиторий** с README
-- 🌐 **Развернутое решение** (публичный URL)
-- 📄 **Описание подхода** - архитектура, методология
-- 📊 **Performance metrics** - Precision, Recall, F1, Throughput, Cost
-- 💰 **Cost analysis** - Детальная разбивка
-
-⚠️ **Важно:** Жюри НЕ будет запускать код локально!
+### Cost Breakdown
+- **Embeddings (SciBERT):** $0.000 (FREE)
+- **Keyword Generation:** ~$0.003 (Nebius)
+- **Entity Validation:** ~$0.015 (Nebius)
+- **Total:** ~$0.018 per paper
 
 ---
 
-## 🔗 Дополнительная документация
+## 🎯 Development Guidelines
 
-- **Полная спецификация:** `docs/singularis_project_doc.md`
-- **Pipeline архитектура:** `docs/pipeline_architecture_plan.md`
-- **PubMed API reference:** `docs/pubmed_api_reference.md`
+### Code Style
+- Use type hints
+- Document complex logic
+- Keep functions focused
+- Follow existing patterns
+
+### Cost Optimization
+- Minimize LLM calls (batching)
+- Cache repeated operations
+- Use SciBERT (FREE) over API embeddings
+- Prefer heuristics over LLM
 
 ---
 
-## 📞 Поддержка
-
-- **Discord:** #singularis-challenge
-- **Менторы:** Доступны через Discord
-- **Вопросы:** DM @HackAging.ai
-
----
-
-**Последнее обновление:** 11 октября 2025
-**Статус:** Active Development - Week 1 (MVP)
+**Last Updated:** October 21, 2025  
+**Status:** Production (Simplified)

@@ -1,5 +1,6 @@
 """Base adapter for all LLM providers"""
 
+import logging
 from abc import ABC, abstractmethod
 from typing import List, Dict, Any, Optional
 
@@ -12,6 +13,8 @@ class BaseLLMAdapter(ABC):
         self.base_url = config.get("base_url", "")
         self.temperature = config.get("temperature", 0.1)
         self.timeout = config.get("timeout", 30)
+        self.log_requests = config.get("log_requests", True)
+        self.logger = logging.getLogger(__name__)
 
     @abstractmethod
     def generate(

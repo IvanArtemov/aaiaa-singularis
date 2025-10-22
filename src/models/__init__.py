@@ -4,7 +4,10 @@ from .entities import (
     Entity,
     Relationship,
     EntityType,
-    RelationshipType
+    RelationshipType,
+    EntitySchema,
+    ENTITY_SCHEMAS,
+    get_entity_schema
 )
 
 from .results import (
@@ -14,12 +17,17 @@ from .results import (
 
 from .graph import KnowledgeGraph
 
+from .sentence import Sentence
+
 __all__ = [
     # Entities
     "Entity",
     "Relationship",
     "EntityType",
     "RelationshipType",
+    "EntitySchema",
+    "ENTITY_SCHEMAS",
+    "get_entity_schema",
 
     # Results
     "ExtractionResult",
@@ -27,4 +35,7 @@ __all__ = [
 
     # Graph
     "KnowledgeGraph",
+
+    # Sentence
+    "Sentence",
 ]

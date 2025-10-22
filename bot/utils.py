@@ -282,3 +282,120 @@ def create_error_message(error: Exception) -> str:
 Попробуйте еще раз или обратитесь в поддержку.
 
 Техническая информация: {type(error).__name__}"""
+
+
+def sanitize_filename(filename: str) -> str:
+    """
+    Clean filename from invalid characters
+
+    Args:
+        filename: Original filename
+
+    Returns:
+        Safe filename without extension and invalid chars
+    """
+    # Remove extension
+    name = Path(filename).stem
+
+    # Keep only alphanumeric and basic chars
+    safe = "".join(c for c in name if c.isalnum() or c in "._- ")
+
+    # Replace spaces with underscores
+    safe = safe.replace(" ", "_")
+
+    # Limit length
+    return safe[:50] if safe else "document"
+
+
+def create_article_directory(
+    results_dir: Path,
+    user_id: int,
+    paper_name: str
+) -> Path:
+    """
+    Create directory for article processing results
+
+    Args:
+        results_dir: Base results directory
+        user_id: Telegram user ID
+        paper_name: Original paper filename
+
+    Returns:
+        Path to created article directory
+        Format: results/user_{user_id}/{timestamp}_{paper_name}/
+    """
+    # Create timestamp
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+
+    # Sanitize paper name
+    safe_paper_name = sanitize_filename(paper_name)
+
+    # Build path
+    article_dir = results_dir / f"user_{user_id}" / f"{timestamp}_{safe_paper_name}"
+
+    # Create directory
+    article_dir.mkdir(parents=True, exist_ok=True)
+
+    return article_dir
+
+
+def save_article_metadata(
+    article_dir: Path,
+    user_id: int,
+    paper_name: str,
+    pipeline: str,
+    result: ExtractionResult
+):
+    """
+    Save article processing metadata
+
+    Args:
+        article_dir: Article directory
+        user_id: User ID
+        paper_name: Paper filename
+        pipeline: Pipeline name (e.g., "scibert_nebius")
+        result: Extraction result with metrics
+    """
+    metadata = {
+        "user_id": user_id,
+        "timestamp": datetime.now().isoformat(),
+        "paper_name": paper_name,
+        "pipeline": pipeline,
+        "cost_usd": result.metrics.cost_usd,
+        "entities_total": result.total_entities(),
+        "relationships_total": result.total_relationships(),
+        "processing_time_seconds": result.metrics.processing_time,
+        "tokens_used": result.metrics.tokens_used,
+        "entities_by_type": {
+            entity_type: len(entities)
+            for entity_type, entities in result.entities.items()
+        }
+    }
+
+    # Save metadata
+    meta_path = article_dir / "metadata.json"
+    with open(meta_path, 'w', encoding='utf-8') as f:
+        json.dump(metadata, f, indent=2, ensure_ascii=False)
+
+
+def save_parsed_document(article_dir: Path, parsed_doc):
+    """
+    Save parsed document to JSON
+
+    Args:
+        article_dir: Article directory
+        parsed_doc: ParsedDocument object
+    """
+    parsed_data = {
+        "title": getattr(parsed_doc, 'title', None),
+        "abstract": getattr(parsed_doc, 'abstract', None),
+        "word_count": getattr(parsed_doc, 'word_count', None),
+        "page_count": getattr(parsed_doc, 'page_count', None),
+        "parse_time": getattr(parsed_doc, 'parse_time', None),
+        "imrad_sections": parsed_doc.imrad_sections if hasattr(parsed_doc, 'imrad_sections') else {},
+        "sections": getattr(parsed_doc, 'sections', [])
+    }
+
+    parsed_path = article_dir / "parsed_doc.json"
+    with open(parsed_path, 'w', encoding='utf-8') as f:
+        json.dump(parsed_data, f, indent=2, ensure_ascii=False)

@@ -1,9 +1,11 @@
 """Base parser for document parsing"""
 
 from abc import ABC, abstractmethod
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 from dataclasses import dataclass
 from datetime import datetime
+
+from src.models import Sentence
 
 
 @dataclass
@@ -15,14 +17,67 @@ class ParsedDocument:
     word_count: int                    # Total word count
     page_count: Optional[int] = None   # Number of pages (if applicable)
     parse_time: Optional[float] = None # Parsing time in seconds
+    imrad_sections: Optional[Dict[str, str]] = None  # IMRAD structured sections
+    _spacy_doc: Optional[Any] = None   # Private: spaCy Doc object with full linguistic annotations
+    title: Optional[str] = None        # Document title
+    sentences: Optional[List[Sentence]] = None  # List of Sentence objects with embeddings
 
     def get_section(self, section_name: str) -> Optional[str]:
-        """Get section text by name (case-insensitive)"""
+        """Get IMRAD section text by name (case-insensitive)"""
+        if not self.imrad_sections:
+            return None
         section_name_lower = section_name.lower()
-        for key, value in self.sections.items():
+        for key, value in self.imrad_sections.items():
             if key.lower() == section_name_lower:
                 return value
         return None
+
+    def get_sentences(self) -> list:
+        """
+        Get list of sentences as strings
+
+        Returns:
+            List of sentence strings
+        """
+        if self._spacy_doc:
+            return [sent.text.strip() for sent in self._spacy_doc.sents]
+        return []
+
+    def get_sentences_by_section(self, section_name: str) -> List[Any]:
+        """
+        Get all Sentence objects from a specific section
+
+        Args:
+            section_name: Name of the section (e.g., "introduction", "methods")
+
+        Returns:
+            List of Sentence objects from the specified section
+        """
+        if not self.sentences:
+            return []
+        return [s for s in self.sentences if s.section == section_name]
+
+    def get_sentence_texts(self) -> List[str]:
+        """
+        Get only the text of all sentences
+
+        Returns:
+            List of sentence text strings
+        """
+        if not self.sentences:
+            return []
+        return [s.text for s in self.sentences]
+
+    def has_embeddings(self) -> bool:
+        """
+        Check if document has sentence embeddings
+
+        Returns:
+            True if sentences have embeddings
+        """
+        if not self.sentences or len(self.sentences) == 0:
+            return False
+        return self.sentences[0].has_embedding()
 
 
 class BaseParser(ABC):
@@ -45,20 +100,6 @@ class BaseParser(ABC):
         Raises:
             FileNotFoundError: If file doesn't exist
             ValueError: If file format is not supported
-        """
-        pass
-
-    @abstractmethod
-    def parse_from_bytes(self, file_bytes: bytes, filename: str = "") -> ParsedDocument:
-        """
-        Parse document from bytes (for file uploads)
-
-        Args:
-            file_bytes: Document content as bytes
-            filename: Original filename (optional, for format detection)
-
-        Returns:
-            ParsedDocument with extracted text, sections, and metadata
         """
         pass
 

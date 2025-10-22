@@ -1,7 +1,7 @@
 """Data models for extracted entities and relationships"""
 
 from dataclasses import dataclass, field, asdict
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 from enum import Enum
 import json
 
@@ -11,7 +11,7 @@ class EntityType(Enum):
     FACT = "fact"
     HYPOTHESIS = "hypothesis"
     EXPERIMENT = "experiment"
-    TECHNIQUE = "technique"
+    METHOD = "method"
     RESULT = "result"
     DATASET = "dataset"
     ANALYSIS = "analysis"
@@ -171,3 +171,153 @@ class Relationship:
     def __str__(self) -> str:
         """String representation"""
         return f"Relationship({self.source_id} --[{self.relationship_type.value}]--> {self.target_id})"
+
+
+@dataclass
+class EntitySchema:
+    """
+    Schema definition for entity types with metadata and patterns
+
+    Used by Entity-Centric Pipeline for semantic retrieval and validation
+
+    Attributes:
+        entity_type: Type of entity this schema describes
+        description: Human-readable description of the entity type
+        typical_sections: IMRAD sections where this entity commonly appears
+        signal_patterns: Regex patterns that indicate this entity type
+    """
+    entity_type: EntityType
+    description: str
+    typical_sections: List[str]
+    signal_patterns: List[str]
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert schema to dictionary"""
+        return {
+            "entity_type": self.entity_type.value,
+            "description": self.description,
+            "typical_sections": self.typical_sections,
+            "signal_patterns": self.signal_patterns
+        }
+
+
+# Predefined schemas for all entity types
+ENTITY_SCHEMAS: Dict[EntityType, EntitySchema] = {
+    EntityType.FACT: EntitySchema(
+        entity_type=EntityType.FACT,
+        description="Established knowledge, prior findings, or background information from literature",
+        typical_sections=["introduction", "abstract", "discussion"],
+        signal_patterns=[
+            r"\b(has\s+been\s+shown|previous\s+stud(?:y|ies)|it\s+is\s+known)",
+            r"\b(established|demonstrated|reported|documented)",
+            r"\b(evidence\s+suggests|research\s+shows|studies\s+indicate)"
+        ]
+    ),
+
+    EntityType.HYPOTHESIS: EntitySchema(
+        entity_type=EntityType.HYPOTHESIS,
+        description="Scientific assumption, prediction, or proposed explanation to be tested",
+        typical_sections=["introduction", "abstract"],
+        signal_patterns=[
+            r"\b(we\s+hypothesi[zs]e|we\s+propose|we\s+predict)",
+            r"\b(suggests?\s+that|may\s+explain|could\s+indicate)",
+            r"\b(it\s+is\s+likely|we\s+expect|we\s+anticipate)",
+            r"\b(research\s+question|aim\s+(?:was|is)\s+to)"
+        ]
+    ),
+
+    EntityType.EXPERIMENT: EntitySchema(
+        entity_type=EntityType.EXPERIMENT,
+        description="Experimental procedures, protocols, or studies designed to test hypotheses",
+        typical_sections=["methods", "materials"],
+        signal_patterns=[
+            r"\b(experiment|experimental\s+design|trial|study\s+design)",
+            r"\b(procedure|protocol|treatment|intervention)",
+            r"\b(randomized|controlled|double-blind|placebo)",
+            r"\b(cohort|clinical\s+trial|in\s+vivo|in\s+vitro)"
+        ]
+    ),
+
+    EntityType.METHOD: EntitySchema(
+        entity_type=EntityType.METHOD,
+        description="Methods, tools, instruments, or analytical procedures used in research",
+        typical_sections=["methods", "materials"],
+        signal_patterns=[
+            r"\b(we\s+used|using|employed|performed|conducted)",
+            r"\b(method|technique|approach|assay|analysis)",
+            r"\b(protocol|procedure|software|tool|instrument)",
+            r"\b(RT-PCR|Western\s+blot|ELISA|microscopy|sequencing)",
+            r"\b(trained\s+(?:with|using)|implemented|applied)"
+        ]
+    ),
+
+    EntityType.RESULT: EntitySchema(
+        entity_type=EntityType.RESULT,
+        description="Experimental findings, measurements, observations, or data outcomes",
+        typical_sections=["results", "discussion"],
+        signal_patterns=[
+            r"\b(we\s+found|we\s+observed|showed\s+that|revealed)",
+            r"\b(result(?:s|ed)|finding(?:s)?|outcome(?:s)?|data\s+showed)",
+            r"\b(significant(?:ly)?|increase[ds]?|decrease[ds]?|reduced?)",
+            r"\b(p\s*[<>=]|correlation|association|effect)",
+            r"\b(measured|detected|identified|quantified)"
+        ]
+    ),
+
+    EntityType.DATASET: EntitySchema(
+        entity_type=EntityType.DATASET,
+        description="Data collections, databases, repositories, or sample sets used or generated",
+        typical_sections=["methods", "materials", "results"],
+        signal_patterns=[
+            r"\b(dataset|database|repository|data\s+collection)",
+            r"\b(samples?|cohort|participant(?:s)?|subject(?:s)?)",
+            r"\b(GEO|ArrayExpress|TCGA|dbGaP|GenBank)",
+            r"\b(publicly\s+available|deposited\s+in|obtained\s+from)",
+            r"\b(training\s+set|test\s+set|validation\s+set)"
+        ]
+    ),
+
+    EntityType.ANALYSIS: EntitySchema(
+        entity_type=EntityType.ANALYSIS,
+        description="Statistical tests, computational methods, or data processing approaches",
+        typical_sections=["methods", "results"],
+        signal_patterns=[
+            r"\b(statistical\s+analysis|data\s+analysis|computational)",
+            r"\b(t-test|ANOVA|regression|chi-square|Mann-Whitney)",
+            r"\b(normalized|adjusted|corrected|transformed)",
+            r"\b(calculated|computed|estimated|modeled)",
+            r"\b(machine\s+learning|neural\s+network|classification)"
+        ]
+    ),
+
+    EntityType.CONCLUSION: EntitySchema(
+        entity_type=EntityType.CONCLUSION,
+        description="Interpretations, implications, or overall findings drawn from results",
+        typical_sections=["conclusion", "discussion", "abstract"],
+        signal_patterns=[
+            r"\b(conclude|conclusion(?:s)?|in\s+summary|overall)",
+            r"\b(these\s+findings|our\s+(?:results|study)\s+(?:suggest|demonstrate|indicate))",
+            r"\b(implication(?:s)?|significance|impact|contribution)",
+            r"\b(future\s+(?:research|studies|work|directions?))",
+            r"\b(collectively|taken\s+together|in\s+conclusion)"
+        ]
+    )
+}
+
+
+def get_entity_schema(entity_type: EntityType) -> EntitySchema:
+    """
+    Get predefined schema for an entity type
+
+    Args:
+        entity_type: Type of entity
+
+    Returns:
+        EntitySchema for the given type
+
+    Raises:
+        KeyError: If entity type not found in ENTITY_SCHEMAS
+    """
+    if entity_type not in ENTITY_SCHEMAS:
+        raise KeyError(f"No schema defined for entity type: {entity_type}")
+    return ENTITY_SCHEMAS[entity_type]

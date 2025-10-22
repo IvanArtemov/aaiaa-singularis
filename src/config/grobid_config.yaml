@@ -1,0 +1,29 @@
+# GROBID Service Configuration
+
+# GROBID server URL
+# Options:
+#   - HuggingFace Space: https://lfoppiano-grobid.hf.space (free, online, recommended)
+grobid_server: "https://lfoppiano-grobid.hf.space"
+
+# Request timeout (seconds)
+# Increase for large PDFs or slow connections
+timeout: 120
+
+# Processing options
+# consolidateHeader: Consolidate header metadata with external sources (CrossRef, PubMed)
+consolidate_header: true
+
+# consolidateCitations: Consolidate citations with CrossRef/PubMed (slower)
+consolidate_citations: false
+
+# includeRawCitations: Include raw citation strings in output
+include_raw_citations: true
+
+# includeRawAffiliations: Include raw affiliation strings in output
+include_raw_affiliations: true
+
+# teiCoordinates: Include bounding box coordinates in TEI XML
+tei_coordinates: true
+
+# segmentSentences: Segment text into sentences
+segment_sentences: true

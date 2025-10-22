@@ -14,8 +14,6 @@ class Settings:
 
     def __init__(
         self,
-        llm_config_path: str = "src/config/llm_config.yaml",
-        fetcher_config_path: str = "src/config/fetcher_config.yaml"
     ):
         # Get project root from environment or auto-detect
         project_root = os.getenv("PROJECT_ROOT")
@@ -26,11 +24,14 @@ class Settings:
             self.project_root = Path(__file__).parent.parent.parent
 
         # Build absolute paths
-        self.llm_config_path = self.project_root / llm_config_path
-        self.fetcher_config_path = self.project_root / fetcher_config_path
+        config_dir = Path(__file__).parent
+        llm_config_path = config_dir / "llm_config.yaml"
 
-        self._config = self._load_config(self.llm_config_path)
-        self._fetcher_config = self._load_config(self.fetcher_config_path) if self.fetcher_config_path.exists() else {}
+        # Load configurations
+        self._config = self._load_config(llm_config_path)
+        self._fetcher_config = {}  # Fetchers removed, keep empty for compatibility
+        self._embedding_config = {}  # Embeddings handled by embedding_adapters, keep empty
+
         self._validate_config()
 
     def _load_config(self, config_path: Path) -> Dict[str, Any]:
@@ -44,14 +45,12 @@ class Settings:
     def _validate_config(self):
         """Validate configuration"""
         active = self.active_provider
-        if active not in self._config:
-            raise ValueError(f"Provider '{active}' not found in config")
+        if active != "nebius":
+            raise ValueError(f"Only 'nebius' provider is supported, got: {active}")
 
-        # Check API keys for OpenAI
-        if active == "openai":
-            api_key_env = self._config["openai"]["api_key_env"]
-            if not os.getenv(api_key_env):
-                print(f"Warning: Environment variable {api_key_env} not set")
+        # Validate Nebius config exists
+        if "nebius" not in self._config:
+            raise ValueError("Nebius configuration not found in llm_config.yaml")
 
     @property
     def active_provider(self) -> str:
@@ -118,6 +117,22 @@ class Settings:
         fetcher = fetcher or self.active_fetcher
         config = self.get_fetcher_config(fetcher)
         return config.get("base_url", "")
+
+    # ==================== Embedding methods ====================
+
+    @property
+    def active_embedding_provider(self) -> str:
+        """Get active embedding provider"""
+        return self._embedding_config.get("active_provider", "scibert")
+
+    def get_embedding_config(self, provider: Optional[str] = None) -> Dict[str, Any]:
+        """Get embedding provider configuration"""
+        provider = provider or self.active_embedding_provider
+        return self._embedding_config.get(provider, {})
+
+    def get_embedding_general_config(self) -> Dict[str, Any]:
+        """Get general embedding settings"""
+        return self._embedding_config.get("general", {})
 
 
 # Global instance

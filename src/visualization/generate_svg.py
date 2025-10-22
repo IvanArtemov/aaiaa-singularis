@@ -15,7 +15,7 @@ from pathlib import Path
 ENTITY_COLORS = {
     "fact": "#b2ebf2",        # cyan
     "hypothesis": "#ffe082",  # yellow
-    "technique": "#f48fb1",   # pink
+    "method": "#f48fb1",   # pink
     "experiment": "#f48fb1",  # pink (same as technique)
     "result": "#a5d6a7",      # green
     "conclusion": "#b0bec5",  # grey
@@ -37,7 +37,7 @@ RELATIONSHIP_COLORS = {
 COLUMNS = {
     "fact": {"x": 150, "label": "Facts"},
     "hypothesis": {"x": 500, "label": "Hypotheses"},
-    "technique": {"x": 850, "label": "Methods"},
+    "method": {"x": 850, "label": "Methods"},
     "experiment": {"x": 850, "label": "Methods"},
     "result": {"x": 1200, "label": "Results"},
     "conclusion": {"x": 1550, "label": "Conclusions"},
@@ -167,7 +167,7 @@ def generate_node(entity: Dict[str, Any], x: float, y: float) -> Tuple[str, Tupl
     width = NODE_WIDTH
 
     # Adjust width for longer nodes
-    if entity_type in ["technique", "experiment", "hypothesis"]:
+    if entity_type in ["method", "experiment", "hypothesis"]:
         width = min(NODE_WIDTH + 24, NODE_WIDTH + max(0, len(max(lines, key=len)) - 25) * 4)
 
     color = ENTITY_COLORS.get(entity_type, "#e0e0e0")
@@ -307,11 +307,11 @@ def generate_svg_from_json(result_json_path: str, output_svg_path: str = None) -
             target_entity, tx, ty, th = entity_positions[target_id]
 
             source_width = NODE_WIDTH
-            if source_entity.get("type") in ["technique", "experiment", "hypothesis"]:
+            if source_entity.get("type") in ["method", "experiment", "hypothesis"]:
                 source_width = min(NODE_WIDTH + 24, NODE_WIDTH + 24)
 
             target_width = NODE_WIDTH
-            if target_entity.get("type") in ["technique", "experiment", "hypothesis"]:
+            if target_entity.get("type") in ["method", "experiment", "hypothesis"]:
                 target_width = min(NODE_WIDTH + 24, NODE_WIDTH + 24)
 
             edge = generate_edge(
