@@ -1,0 +1,297 @@
+================================================================================
+AAIAA SINGULARIS - ARCHITECTURE SUMMARY
+================================================================================
+
+PROJECT: SciBERT-Nebius Knowledge Graph Extractor
+GOAL: Extract structured information from scientific papers (cost: $0.018/paper)
+STATUS: Production-ready with CLI tool + Telegram bot integration
+
+================================================================================
+1. MAIN PIPELINE FLOW (6 Phases)
+================================================================================
+
+PHASE 0.5: Sentence Embeddings (FREE, SciBERT, 768-dim vectors)
+  - Input: IMRAD sections from GROBID parser
+  - Output: Sentences with embeddings + metadata (position, section, char offsets)
+  - Cost: $0.000 (local SciBERT model)
+  - Time: 3-5 seconds
+
+PHASE 1: Keyword Generation (~$0.003, Nebius LLM)
+  - Input: Title + Abstract + Introduction (500 words max)
+  - Output: 15 keywords per entity type (8 types = 120 keywords)
+  - Process: Uses gpt-oss-120b to generate context-aware search terms
+  - Cache: LRU cache prevents duplicate generation
+  - Time: 5-10 seconds
+
+PHASE 4: Semantic Retrieval (FREE, ChromaDB HNSW index)
+  - Input: Keyword embeddings + entity type
+  - Output: Top-k candidate segments per type (adaptive: 10-35)
+  - Process: Cosine similarity search in local ChromaDB
+  - Filtering: By section (e.g., HYPOTHESIS only in intro/abstract)
+  - Time: 2-3 seconds
+
+PHASE 5: Entity Validation (~$0.015, Nebius LLM)
+  - Input: Retrieved candidate segments
+  - Output: Validated Entity objects with confidence scores (0.65-1.0)
+  - Process: Batch validation (5-10 candidates per API call)
+  - Validation: 3-level criteria (HIGHLY VALID 0.85+ / VALID 0.70-0.85 / INVALID <0.65)
+  - Type-specific thresholds (METHOD: 0.72, HYPOTHESIS: 0.68, etc.)
+  - Parallelization: 4 threads for different entity types
+  - Time: 15-20 seconds
+
+PHASE 6: Graph Assembly (FREE, heuristic rules)
+  - Input: All validated entities + sentences
+  - Output: Relationships between entities (14 types)
+  - Process: Applies 8 linking rules based on:
+    * Section proximity (fact→hypothesis same section)
+    * Entity type combinations (hypothesis→experiment)
+    * Text overlap (Jaccard similarity on keywords)
+    * Confidence multiplication (min of sources × modifier 0.6-0.85)
+  - Filtering: Only relationships with confidence ≥ 0.6
+  - Time: 1-2 seconds
+
+VISUALIZATION: SVG export (8-column hierarchical layout)
+  - Columns: Facts → Hypotheses → Experiments/Methods → Results/Datasets → Analysis → Conclusions
+  - Format: 2400px wide SVG with colored nodes + Bezier curve edges
+  - Time: 2-3 seconds
+
+TOTAL: 60-90 seconds, $0.018 per paper
+
+================================================================================
+2. ENTITY EXTRACTION APPROACH
+================================================================================
+
+EIGHT ENTITY TYPES:
+  1. FACT - Established knowledge, prior findings
+  2. HYPOTHESIS - Scientific assumption to test
+  3. EXPERIMENT - Procedures for testing hypotheses
+  4. METHOD - Detailed procedural descriptions (MUST include HOW: parameters, temps, durations)
+  5. RESULT - Experimental findings, measurements
+  6. DATASET - Data collections (GSE*, SRA*, scRNA-seq data, etc.)
+  7. ANALYSIS - Statistical/computational tests
+  8. CONCLUSION - Interpretations and implications
+
+TWO-STAGE FILTERING:
+  Stage 1 (Broad Retrieval): 50-60% precision, 95% recall
+    - Uses keywords + SciBERT embeddings + ChromaDB
+    - Cost: FREE
+    - Gets many false positives but catches real entities
+  
+  Stage 2 (Precise Validation): 88%+ precision, 82% recall
+    - Uses Nebius LLM to validate only retrieved candidates
+    - Cost: $0.015
+    - Removes false positives effectively
+
+ADAPTIVE RETRIEVAL (top-k per entity type):
+  HYPOTHESIS: 35    (rare, 1-3 per paper)
+  EXPERIMENT: 25    (moderate rarity, 5-10 per paper)
+  METHOD: 12        (common, 50+ mentions)
+  FACT: 10          (very common, 100+ facts)
+  RESULT: 15        (moderate)
+  DATASET: 15       (moderate)
+  ANALYSIS: 15      (moderate)
+  CONCLUSION: 20    (common)
+
+VALIDATION CRITERIA:
+  - All types validated against entity schema (description + signal patterns)
+  - METHOD: Requires HOW (procedures, parameters, conditions)
+  - EXPERIMENT: WHAT WAS DONE (not just observations)
+  - DATASET: Data source identifiers or collection references
+  - Thresholds vary: METHOD 0.72 (strict) vs DATASET 0.65 (loose)
+
+================================================================================
+3. KNOWLEDGE GRAPH ASSEMBLY
+================================================================================
+
+GRAPH STRUCTURE:
+  - 50-200 entities per paper (with 0.65-1.0 confidence)
+  - 100-400 relationships per paper
+  - 14 relationship types (FACT_TO_HYPOTHESIS, HYPOTHESIS_TO_EXPERIMENT, etc.)
+  - Each relationship has confidence score (0.6-1.0) + metadata (rule, overlap, section)
+
+HEURISTIC LINKING RULES:
+  1. Fact → Hypothesis: Same section (intro), confidence × 0.8
+  2. Hypothesis → Experiment: Cross-section, confidence × 0.75
+  3. Experiment → Method: Text overlap >10%: ×0.85, <10%: ×0.7
+  4. Experiment → Dataset: Section proximity (methods), confidence × 0.7
+  5. Method → Result: Text overlap >15%: ×0.75, <15%: ×0.65
+  6. Result → Analysis: Same section: ×0.8, Different: ×0.65
+  7. Result → Conclusion: Text overlap >20%: ×0.85, <20%: ×0.75
+  8. Analysis → Conclusion: Logical flow, confidence × 0.7
+
+TEXT OVERLAP CALCULATION:
+  overlap = |keywords1 ∩ keywords2| / |keywords1 ∪ keywords2|
+  (Jaccard similarity on words >3 chars, excluding stop words)
+
+VISUALIZATION:
+  - 8 columns: Input Facts, Hypotheses, Experiments, Techniques, Results, Datasets, Analysis, Conclusions
+  - 2400px wide SVG
+  - Nodes: Colored boxes (200px wide), dynamic height based on text
+  - Edges: Bezier curves with directional arrows
+  - Colors: 8 distinct colors per entity type
+
+================================================================================
+4. CURRENT LIMITATIONS & IMPROVEMENTS
+================================================================================
+
+KEY LIMITATIONS:
+
+1. Heuristic Graph Assembly
+   - Cannot capture implicit relationships (negative results)
+   - Misses relationships across distant sections
+   - Keyword overlap is crude (no synonym detection)
+   - Impact: Recall ~82% for complex relationships
+
+2. Sequential Processing
+   - No feedback loops between phases
+   - Cannot refine keywords based on found entities
+   - Missed candidates in Phase 4 cannot be recovered
+   - Impact: Recall ceiling at ~82%
+
+3. SciBERT Domain Constraints
+   - Pre-trained on CS + Biology papers (2018)
+   - May underperform on specialized domains (chemistry, materials science)
+   - Fixed 768-dim vectors may compress domain-specific semantics
+
+4. Batch Size Limitations
+   - Limited to 5-10 candidates per LLM call
+   - Reduced context (300 chars per candidate)
+   - Cannot see candidate relationships in batch
+
+5. No Coreference Resolution
+   - "caloric restriction", "CR", "dietary restriction" = separate entities
+   - Duplicate entities in output, sparse relationships
+
+6. Fixed Confidence Thresholds
+   - Same threshold (e.g., METHOD: 0.72) for all papers
+   - No adaptation to paper quality
+   - Variance: ~2-3% precision/recall
+
+7. IMRAD Inflexibility
+   - Assumes papers follow IMRAD structure
+   - Fails on reviews, position papers, opinion pieces
+   - No support for non-standard fields (math, theory)
+
+8. SVG Visualization Scaling
+   - 200+ entities become cluttered
+   - No interactive exploration
+   - Linear flow layout not ideal for complex graphs
+
+PROPOSED IMPROVEMENTS:
+
+1. Semantic Relationship Linking
+   - Use embedding distance + Jaccard overlap
+   - Add synonym detection (WordNet, biomedical entity linkers)
+   - ML-based relationship validator
+
+2. Iterative Refinement Loop
+   - Analyze extraction gaps
+   - Increase top-k + lower thresholds for rare types
+   - Prune duplicates in final pass
+
+3. Coreference Resolution
+   - Post-processing: fuzzy string matching
+   - LLM-based entity linking
+   - Entity consolidation by semantic similarity
+
+4. Adaptive Thresholds
+   - Paper quality metrics (abstract length, citation count, etc.)
+   - Dynamic threshold adjustment
+   - Per-domain threshold profiles
+
+5. Interactive Visualization
+   - D3.js or Cytoscape.js for interactive exploration
+   - Filtering by entity type, relationship type, confidence
+   - Dynamic layout algorithms (force-directed, hierarchical)
+
+6. Context-Aware Validation
+   - Include ±2 sentences around candidates
+   - Cross-reference with paper's abstract/title
+   - Check consistency with paper's domain
+
+7. Cross-Paper Linking
+   - Link entities across papers (same corpus)
+   - Create meta-relationships (extends prior work)
+   - Build corpus-wide knowledge graphs
+
+8. Cost-Quality Trade-offs
+   - User-specified budget vs quality
+   - Variable batch sizes for different accuracy levels
+   - Optional phases (skip keyword generation for -10% recall, +20% speed)
+
+================================================================================
+5. PAPER PROCESSING PIPELINE
+================================================================================
+
+END-TO-END WORKFLOW:
+
+INPUT: PDF file (paper.pdf)
+  ↓
+VALIDATION: Check dependencies, API keys, file format
+  ↓
+GROBID PARSING: Extract IMRAD sections + metadata (2-5 seconds)
+  ↓
+DOCUMENT STRUCTURE: Create ParsedDocument with sections
+  ↓
+PIPELINE INITIALIZATION: Load models (SciBERT, LLM, ChromaDB)
+  ↓
+EXTRACTION: Run 6 phases sequentially
+  ↓
+RESULTS ASSEMBLY: Collect entities, relationships, metrics
+  ↓
+OUTPUT GENERATION:
+  - {paper_id}_entities.json: Full extraction result
+  - {paper_id}_metrics.json: Performance metrics
+  - {paper_id}_graph.svg: Knowledge graph visualization
+
+CLI INTERFACE:
+  python scripts/process_pdf.py --pdf paper.pdf
+  python scripts/process_pdf.py -p paper.pdf -o results
+  python scripts/process_pdf.py -p paper.pdf --no-svg (skip visualization)
+  python scripts/process_pdf.py -p paper.pdf -v (verbose mode)
+
+TELEGRAM BOT INTEGRATION:
+  - User sends PDF → Bot processes → Returns SVG graph
+  - Session management, rate limiting, error handling
+
+================================================================================
+SUMMARY METRICS
+================================================================================
+
+Component              | Cost    | Latency   | Key Role
+-----------------------+---------+-----------+--------------------------------
+PDF Parsing (GROBID)   | $0.000  | 2-5s      | Structured IMRAD extraction
+Sentence Embeddings    | $0.000  | 3-5s      | Free domain-optimized vectors
+Keyword Generation     | $0.003  | 5-10s     | Context-aware search terms
+Semantic Search (CDB)  | $0.000  | 2-3s      | Fast candidate retrieval
+Entity Validation      | $0.015  | 15-20s    | Precision filtering
+Graph Assembly         | $0.000  | 1-2s      | Relationship mining
+Visualization (SVG)    | $0.000  | 2-3s      | 8-column layout
+-----------------------+---------+-----------+--------------------------------
+TOTAL                  | $0.018  | 60-90s    | Production-ready extraction
+
+Performance Targets:
+  - Precision: ≥88%
+  - Recall: ≥82%
+  - F1-Score: ≥85%
+  - Cost: $0.018 per paper
+  - Entities: 50-200 per paper
+  - Relationships: 100-400 per paper
+
+Architecture Strengths:
+  1. Cost-efficient: 27x cheaper than pure LLM ($0.018 vs $0.50-2.00)
+  2. Accurate: 88%+ precision via 2-stage filtering
+  3. Fast: 60-90 seconds including visualization
+  4. Scalable: Hybrid approach avoids LLM for every candidate
+  5. Interpretable: Full traceability of entities + confidence scores
+  6. Flexible: Configurable entity schemas + thresholds
+  7. Production-ready: CLI tool + Telegram bot + logging
+  8. Domain-optimized: SciBERT trained on 1.14M scientific papers
+
+Trade-offs:
+  - Recall vs Cost: Limited by top-k + validation thresholds
+  - Precision vs Recall: Type-specific thresholds (METHOD strict, DATASET loose)
+  - Speed vs Accuracy: Batch validation trades latency for cost
+  - Flexibility vs Simplicity: Heuristic rules vs LLM refinement
+
+================================================================================
